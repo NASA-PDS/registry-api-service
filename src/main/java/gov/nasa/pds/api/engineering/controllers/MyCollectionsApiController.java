@@ -181,19 +181,4 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 		}
     	
     }
-    
-
-
-	@Override
-	public ResponseEntity<Product> collectionsByLidvid(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ResponseEntity<Products> productsOfACollection(String arg0, @Valid Integer arg1, @Valid Integer arg2,
-			@Valid List<String> arg3, @Valid List<String> arg4, @Valid Boolean arg5) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
