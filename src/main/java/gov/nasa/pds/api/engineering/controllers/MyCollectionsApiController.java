@@ -2,7 +2,7 @@ package gov.nasa.pds.api.engineering.controllers;
 
 
 import gov.nasa.pds.api.base.CollectionsApi;
-
+import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,4 +44,16 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     	return this.getProductsResponseEntity(q, start, limit, fields, sort, onlySummary);
     }
 
+	@Override
+	public ResponseEntity<Product> collectionsByLidvid(String arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<Products> productsOfACollection(String arg0, @Valid Integer arg1, @Valid Integer arg2,
+			@Valid List<String> arg3, @Valid List<String> arg4, @Valid Boolean arg5) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
