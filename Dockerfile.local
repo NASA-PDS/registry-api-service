@@ -8,6 +8,7 @@ ENV VERSION=$version
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y curl \
+                       libtcnative-1 \
                        maven \
                        openjdk-11-jdk-headless \
                        tar
@@ -31,5 +32,5 @@ RUN cd /usr/local/registry-api-service-${VERSION} && \
     mvn install
 
 # Run the sevice by default
-WORKDIR /usr/local/registry-api-service
+WORKDIR /usr/local/registry-api-service-${VERSION}
 CMD ["mvn", "spring-boot:run"]
