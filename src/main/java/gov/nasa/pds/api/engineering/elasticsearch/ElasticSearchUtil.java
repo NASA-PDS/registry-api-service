@@ -1,13 +1,24 @@
 package gov.nasa.pds.api.engineering.elasticsearch;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.api.engineering.exceptions.UnsupportedElasticSearchProperty;
@@ -105,17 +116,7 @@ public class ElasticSearchUtil {
 			meta.setUpdateDateTime(updateDateTime);
 		}
 		*/
-		
-		/* skeleton on how to populate refs */
-		/*
-		String pds4string = ep.getPDS4XML();
-		Reference ref = new Reference();
-		ref.setTitle(title); // get title from pds4string
-		ArrayList<Reference> investigations = new ArrayList<Reference>();
-		investigations.add(ref);
-		product.setInvestigations(investigations);
-		*/
-		
+				
 		
 		String labelUrl = ep.getPDS4FileRef();
 		if (labelUrl != null) {		
@@ -125,7 +126,27 @@ public class ElasticSearchUtil {
 		product.setLabelXml(ep.getPDS4XML()); // value is injected to be used as-is in XML serialization
 		
 		product.setMetadata(meta);
-	
+			
+		try
+		{
+			ArrayList<Reference> investigations = new ArrayList<Reference>();
+			Document xmldoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse (new InputSource(new StringReader(ep.getPDS4XML())));
+			NodeList investigation_areas = xmldoc.getElementsByTagName("Investigation_Area");
+
+			for (int index=0 ; index < investigation_areas.getLength() ; index++)
+			{
+				investigations.add(new Reference());
+				investigations.get(index).setTitle(((Element)investigation_areas.item(index)).getElementsByTagName("name").item(0).getTextContent());
+				investigations.get(index).setRef(((Element)investigation_areas.item(index)).getElementsByTagName("lid_reference").item(0).getTextContent());
+				investigations.get(index).setType(((Element)investigation_areas.item(index)).getElementsByTagName("type").item(0).getTextContent());
+				investigations.get(index).setDescription("");
+			}
+			product.setInvestigations(investigations);
+		} catch (SAXException | IOException | ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		return product;
 	
 		
