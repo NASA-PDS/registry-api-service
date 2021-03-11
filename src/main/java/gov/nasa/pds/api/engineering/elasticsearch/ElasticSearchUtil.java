@@ -99,8 +99,6 @@ public class ElasticSearchUtil {
 		ArrayList<Reference> investigations = new ArrayList<Reference>();
 		ArrayList<Reference> osc = new ArrayList<Reference>();
 		ArrayList<Reference> targets = new ArrayList<Reference>();
-		List<String> refIDs = ep.getReferenceLidVid();
-		List<String> refTypes = ep.getReferenceRoles();
 		Metadata meta = new Metadata();
 		String baseURL = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
 
@@ -126,36 +124,9 @@ public class ElasticSearchUtil {
 			meta.setLabelUrl(labelUrl);
 		}
 
-		/*
-		if (refIDs.size() == refTypes.size())
-		{
-			for (int i=0 ; i < refIDs.size(); i++)
-			{
-				switch (refTypes.get(i))
-				{
-					case "collection_to_investigation":
-						ElasticSearchUtil.append(investigations, refIDs.get(i), baseURL);
-						break;
-					case "is_instrument":
-						ElasticSearchUtil.append(osc, refIDs.get(i), baseURL);
-						break;
-					case "collection_to_target":
-						ElasticSearchUtil.append(targets, refIDs.get(i), baseURL);
-						break;
-					default: break;
-				}
-			}
-		}
-		else
-		{
-			// PANIC: how could this ever happen!!!
-			log.error("The number of reference IDs does not match the number of reference types.");
-		}
-		*/
-		
 		for (String id : ep.getRef_lid_instrument()) { ElasticSearchUtil.append (osc, id, baseURL); }
-		ElasticSearchUtil.append (investigations, ep.getRef_lid_investigation(), baseURL);
-		ElasticSearchUtil.append (targets, ep.getRef_lid_target(), baseURL);
+		for (String id : ep.getRef_lid_investigation()) { ElasticSearchUtil.append (investigations, id, baseURL); }
+		for (String id : ep.getRef_lid_target()) { ElasticSearchUtil.append (targets, id, baseURL); }
 		product.setLabelXml(ep.getPDS4XML()); // value is injected to be used as-is in XML serialization
 		product.setInvestigations(investigations);
 		product.setMetadata(meta);
