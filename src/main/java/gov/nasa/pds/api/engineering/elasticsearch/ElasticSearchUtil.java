@@ -124,6 +124,7 @@ public class ElasticSearchUtil {
 			meta.setLabelUrl(labelUrl);
 		}
 
+		for (String id : ep.getRef_lid_instrument_host()) { ElasticSearchUtil.append (osc, id, baseURL); }
 		for (String id : ep.getRef_lid_instrument()) { ElasticSearchUtil.append (osc, id, baseURL); }
 		for (String id : ep.getRef_lid_investigation()) { ElasticSearchUtil.append (investigations, id, baseURL); }
 		for (String id : ep.getRef_lid_target()) { ElasticSearchUtil.append (targets, id, baseURL); }

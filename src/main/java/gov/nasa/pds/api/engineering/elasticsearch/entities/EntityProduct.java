@@ -92,6 +92,10 @@ public class EntityProduct {
 	//private String targetName;
 
 	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+	@JsonProperty("ref_lid_instrument_host")
+	private List<String> ref_lid_instrument_host = new ArrayList<String>();
+
+	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
 	@JsonProperty("ref_lid_instrument")
 	private List<String> ref_lid_instrument = new ArrayList<String>();
 	
@@ -141,6 +145,10 @@ public class EntityProduct {
 	
 	public List<String> getRef_lid_instrument() {
 		return ref_lid_instrument;
+	}
+
+	public List<String> getRef_lid_instrument_host() {
+		return ref_lid_instrument_host;
 	}
 
 	public List<String> getRef_lid_investigation() {
