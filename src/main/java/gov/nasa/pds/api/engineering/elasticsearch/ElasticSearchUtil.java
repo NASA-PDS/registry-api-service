@@ -3,11 +3,13 @@ package gov.nasa.pds.api.engineering.elasticsearch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.api.engineering.exceptions.UnsupportedElasticSearchProperty;
@@ -22,6 +24,14 @@ public class ElasticSearchUtil {
 	static public String jsonPropertyToElasticProperty(String jsonProperty) {
 		return jsonProperty.replace(".", "/");
 		
+	}
+	
+	static private void append (ArrayList<Reference> to, String ID, String baseURL)
+	{
+		Reference reference = new Reference();
+		reference.setId(ID + ".orex");
+		reference.setHref(baseURL + "/products/" + reference.getId());
+		to.add(reference);
 	}
 	
 	static public String elasticPropertyToJsonProperty(String elasticProperty) throws UnsupportedElasticSearchProperty {
@@ -86,9 +96,14 @@ public class ElasticSearchUtil {
 		}
 		*/
 		
+		ArrayList<Reference> investigations = new ArrayList<Reference>();
+		ArrayList<Reference> osc = new ArrayList<Reference>();
+		ArrayList<Reference> targets = new ArrayList<Reference>();
+		List<String> refIDs = ep.getReferenceLidVid();
+		List<String> refTypes = ep.getReferenceRoles();
 		Metadata meta = new Metadata();
-		
-		
+		String baseURL = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+
 		String version = ep.getVersion();
 		if (version != null) {
 			meta.setVersion(ep.getVersion());
@@ -106,26 +121,46 @@ public class ElasticSearchUtil {
 		}
 		*/
 		
-		/* skeleton on how to populate refs */
-		/*
-		String pds4string = ep.getPDS4XML();
-		Reference ref = new Reference();
-		ref.setTitle(title); // get title from pds4string
-		ArrayList<Reference> investigations = new ArrayList<Reference>();
-		investigations.add(ref);
-		product.setInvestigations(investigations);
-		*/
-		
-		
 		String labelUrl = ep.getPDS4FileRef();
 		if (labelUrl != null) {		
 			meta.setLabelUrl(labelUrl);
 		}
+
+		/*
+		if (refIDs.size() == refTypes.size())
+		{
+			for (int i=0 ; i < refIDs.size(); i++)
+			{
+				switch (refTypes.get(i))
+				{
+					case "collection_to_investigation":
+						ElasticSearchUtil.append(investigations, refIDs.get(i), baseURL);
+						break;
+					case "is_instrument":
+						ElasticSearchUtil.append(osc, refIDs.get(i), baseURL);
+						break;
+					case "collection_to_target":
+						ElasticSearchUtil.append(targets, refIDs.get(i), baseURL);
+						break;
+					default: break;
+				}
+			}
+		}
+		else
+		{
+			// PANIC: how could this ever happen!!!
+			log.error("The number of reference IDs does not match the number of reference types.");
+		}
+		*/
 		
+		for (String id : ep.getRef_lid_instrument()) { ElasticSearchUtil.append (osc, id, baseURL); }
+		ElasticSearchUtil.append (investigations, ep.getRef_lid_investigation(), baseURL);
+		ElasticSearchUtil.append (targets, ep.getRef_lid_target(), baseURL);
 		product.setLabelXml(ep.getPDS4XML()); // value is injected to be used as-is in XML serialization
-		
+		product.setInvestigations(investigations);
 		product.setMetadata(meta);
-	
+		product.setObservingSystemComponents(osc);
+		product.setTargets(targets);
 		return product;
 	
 		

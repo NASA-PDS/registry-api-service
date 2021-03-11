@@ -72,11 +72,11 @@ public class EntityProduct {
 	
 	
 	// TO DO read it from xml
-	//@JsonProperty("pds/Internal_Reference/pds/reference_type")
-	//private List<String> referenceRoles;
+	@JsonProperty("pds/Internal_Reference/pds/reference_type")
+	private List<String> referenceRoles;
 	
-	//@JsonProperty("pds/Internal_Reference/pds/lid_reference")
-	//private List<String> referenceLidVid;
+	@JsonProperty("pds/Internal_Reference/pds/lid_reference")
+	private List<String> referenceLidVid;
 	
 	//@JsonProperty("pds/Observing_System_Component/pds/name")
 	//private List<String> observingSystemNames;
@@ -90,6 +90,15 @@ public class EntityProduct {
 	//@JsonProperty("pds/Target_Identification/pds/name")
 	//private String targetName;
 	
+	@JsonProperty("ref_lid_instruments")
+	private List<String> ref_lid_instrument = new ArrayList<String>();
+	
+	@JsonProperty("ref_lid_investigation")
+	private String ref_lid_investigation; 
+	
+	@JsonProperty("ref_lid_target")
+	private String ref_lid_target; 
+
 	@JsonProperty("vid")
 	private String version; 
 	
@@ -126,12 +135,27 @@ public class EntityProduct {
 	    return iterable == null ? Collections.<T>emptyList() : iterable;
 	}
 	
-	/*
 	public List<String> getReferenceRoles() {
 		return this.referenceRoles;
 	}
-	
-	
+
+	public List<String> getReferenceLidVid() {
+		return referenceLidVid;
+	}
+
+	public List<String> getRef_lid_instrument() {
+		return ref_lid_instrument;
+	}
+
+	public String getRef_lid_investigation() {
+		return ref_lid_investigation;
+	}
+
+	public String getRef_lid_target() {
+		return ref_lid_target;
+	}
+
+	/*
 	public String getReferenceLidVid(String role) {
 		int i=0;
 		for (String t : EntityProduct.emptyIfNull(this.referenceRoles)) {
