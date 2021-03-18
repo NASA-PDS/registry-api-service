@@ -28,6 +28,7 @@ public class ElasticSearchUtil {
 	static private void addReference (ArrayList<Reference> to, String ID, String baseURL)
 	{
 		Reference reference = new Reference();
+		reference.setId(ID);
 		reference.setHref(baseURL + "/products/" + reference.getId());
 		to.add(reference);
 	}
