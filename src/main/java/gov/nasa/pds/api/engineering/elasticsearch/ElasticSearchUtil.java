@@ -3,7 +3,6 @@ package gov.nasa.pds.api.engineering.elasticsearch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -26,10 +25,9 @@ public class ElasticSearchUtil {
 		
 	}
 	
-	static private void append (ArrayList<Reference> to, String ID, String baseURL)
+	static private void addReference (ArrayList<Reference> to, String ID, String baseURL)
 	{
 		Reference reference = new Reference();
-		reference.setId(ID + ".orex");
 		reference.setHref(baseURL + "/products/" + reference.getId());
 		to.add(reference);
 	}
@@ -97,7 +95,7 @@ public class ElasticSearchUtil {
 		*/
 		
 		ArrayList<Reference> investigations = new ArrayList<Reference>();
-		ArrayList<Reference> osc = new ArrayList<Reference>();
+		ArrayList<Reference> observationSystemComponent = new ArrayList<Reference>();
 		ArrayList<Reference> targets = new ArrayList<Reference>();
 		Metadata meta = new Metadata();
 		String baseURL = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
@@ -124,14 +122,14 @@ public class ElasticSearchUtil {
 			meta.setLabelUrl(labelUrl);
 		}
 
-		for (String id : ep.getRef_lid_instrument_host()) { ElasticSearchUtil.append (osc, id, baseURL); }
-		for (String id : ep.getRef_lid_instrument()) { ElasticSearchUtil.append (osc, id, baseURL); }
-		for (String id : ep.getRef_lid_investigation()) { ElasticSearchUtil.append (investigations, id, baseURL); }
-		for (String id : ep.getRef_lid_target()) { ElasticSearchUtil.append (targets, id, baseURL); }
+		for (String id : ep.getRef_lid_instrument_host()) { ElasticSearchUtil.addReference (observationSystemComponent, id, baseURL); }
+		for (String id : ep.getRef_lid_instrument()) { ElasticSearchUtil.addReference (observationSystemComponent, id, baseURL); }
+		for (String id : ep.getRef_lid_investigation()) { ElasticSearchUtil.addReference (investigations, id, baseURL); }
+		for (String id : ep.getRef_lid_target()) { ElasticSearchUtil.addReference (targets, id, baseURL); }
 		product.setLabelXml(ep.getPDS4XML()); // value is injected to be used as-is in XML serialization
 		product.setInvestigations(investigations);
 		product.setMetadata(meta);
-		product.setObservingSystemComponents(osc);
+		product.setObservingSystemComponents(observationSystemComponent);
 		product.setTargets(targets);
 		return product;
 	
