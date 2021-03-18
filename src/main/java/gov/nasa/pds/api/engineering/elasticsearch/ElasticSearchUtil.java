@@ -25,6 +25,11 @@ public class ElasticSearchUtil {
 		
 	}
 	
+	static public String elasticPropertyToJsonProperty(String elasticProperty) throws UnsupportedElasticSearchProperty {
+		   		
+			return elasticProperty.replace('/', '.');
+	 }
+	
 	static private void addReference (ArrayList<Reference> to, String ID, String baseURL)
 	{
 		Reference reference = new Reference();
@@ -32,13 +37,6 @@ public class ElasticSearchUtil {
 		reference.setHref(baseURL + "/products/" + reference.getId());
 		to.add(reference);
 	}
-	
-	static public String elasticPropertyToJsonProperty(String elasticProperty) throws UnsupportedElasticSearchProperty {
-		   		
-			return elasticProperty.replace('/', '.');
-	 }
-	
-	
 
 	static public Map<String, Object> elasticHashMapToJsonHashMap(Map<String, Object> sourceAsMap){
 			 Map<String, Object> sourceAsMapJsonProperties = new HashMap<String, Object>();
