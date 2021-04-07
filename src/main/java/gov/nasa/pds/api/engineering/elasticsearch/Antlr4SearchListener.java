@@ -46,6 +46,16 @@ public class Antlr4SearchListener extends SearchBaseListener
 	}
 	
 	
+    public Antlr4SearchListener() {
+		
+		super();
+		this.queryQB = QueryBuilders.boolQuery();
+		
+	}
+	
+	
+	
+	
 	 @Override
 	 public void enterQuery(SearchParser.QueryContext ctx)
 	 {

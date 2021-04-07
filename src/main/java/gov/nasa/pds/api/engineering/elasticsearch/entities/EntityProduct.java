@@ -1,5 +1,6 @@
 package gov.nasa.pds.api.engineering.elasticsearch.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import gov.nasa.pds.api.engineering.controllers.MyCollectionsApiController;
@@ -30,6 +31,10 @@ import org.xml.sax.SAXException;
 public class EntityProduct {
 	private static final Logger log = LoggerFactory.getLogger(EntityProduct.class);
 	
+
+	
+	
+	
 	public final String PROCEDURE_INSTRUMENT_TYPE = "Instrument";
 	public final String PROCEDURE_INSTRUMENT_HOST_TYPE = "Spacecraft";
 	
@@ -44,8 +49,9 @@ public class EntityProduct {
     public final String TARGET_ROLE = "data_to_target";
     public final List<String> TARGET_ROLES = new ArrayList<>(Arrays.asList(
     	    this.TARGET_ROLE));
-	
-	
+    
+   
+    
 	@JsonProperty("lidvid")
 	private String lidvid;
 	
@@ -61,10 +67,10 @@ public class EntityProduct {
 	@JsonProperty("pds:Time_Coordinates/pds:stop_date_time")
 	private String stop_date_time;
 
-	/* 	// TO TO read it manually
+	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
 	@JsonProperty("pds/Modification_Detail/pds/modification_date")
-    private String modification_date;
-    */
+    private List<String> modification_date;
+    
 	
 
 	@JsonProperty("pds:File/pds:creation_date_time")
@@ -89,11 +95,27 @@ public class EntityProduct {
 	
 	//@JsonProperty("pds/Target_Identification/pds/name")
 	//private String targetName;
+
+	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+	@JsonProperty("ref_lid_instrument_host")
+	private List<String> ref_lid_instrument_host = new ArrayList<String>();
+
+	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+	@JsonProperty("ref_lid_instrument")
+	private List<String> ref_lid_instrument = new ArrayList<String>();
 	
+	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+	@JsonProperty("ref_lid_investigation")
+	private List<String> ref_lid_investigation = new ArrayList<String>(); 
+	
+	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+	@JsonProperty("ref_lid_target")
+	private List<String> ref_lid_target = new ArrayList<String>(); 
+
 	@JsonProperty("vid")
 	private String version; 
 	
-	@JsonProperty("ops:Data_File_Info/ops:file_ref")
+	@JsonProperty("ops:Label_File_Info/ops:file_ref")
 	private String pds4FileReference;
 	
 	@JsonProperty("ops:Label_File_Info/ops:blob")
@@ -126,12 +148,31 @@ public class EntityProduct {
 	    return iterable == null ? Collections.<T>emptyList() : iterable;
 	}
 	
+	public List<String> getRef_lid_instrument() {
+		return ref_lid_instrument;
+	}
+
+	public List<String> getRef_lid_instrument_host() {
+		return ref_lid_instrument_host;
+	}
+
+	public List<String> getRef_lid_investigation() {
+		return ref_lid_investigation;
+	}
+
+	public List<String> getRef_lid_target() {
+		return ref_lid_target;
+	}
+
 	/*
 	public List<String> getReferenceRoles() {
 		return this.referenceRoles;
 	}
-	
-	
+
+	public List<String> getReferenceLidVid() {
+		return referenceLidVid;
+	}
+
 	public String getReferenceLidVid(String role) {
 		int i=0;
 		for (String t : EntityProduct.emptyIfNull(this.referenceRoles)) {

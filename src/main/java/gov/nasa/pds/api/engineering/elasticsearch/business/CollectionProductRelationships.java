@@ -7,7 +7,6 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +25,32 @@ public class CollectionProductRelationships implements Iterable<EntityProduct> {
 	RestHighLevelClient restHighLevelClient;
 	SearchRequest searchRequest;
 	SearchHits searchHits;
+	int start;
+	public int getStart() {
+		return start;
+	}
+
+
+	int limit;
 	
-	public CollectionProductRelationships(String lidvid, ElasticSearchRegistryConnection elasticSearchConnection) throws IOException {
+	public int getLimit() {
+		return limit;
+	}
+
+	public CollectionProductRelationships(
+			String lidvid, 
+			int start,
+			int limit,
+			ElasticSearchRegistryConnection elasticSearchConnection) throws IOException {
 		this.elasticSearchConnection = elasticSearchConnection;
+		this.start = start;
+		this.limit = limit;
 		
 		searchRequest = new ElasticSearchRegistrySearchRequestBuilder(
 				this.elasticSearchConnection.getRegistryIndex(),
     			this.elasticSearchConnection.getRegistryRefIndex(),
     			this.elasticSearchConnection.getTimeOutSeconds())
-    			.getSearchProductRefsFromCollectionLidVid(lidvid);
+				.getSearchProductRefsFromCollectionLidVid(lidvid, start, limit);
 		 SearchResponse searchCollectionRefResponse = null;
 	        
          restHighLevelClient = this.elasticSearchConnection.getRestHighLevelClient();
@@ -44,16 +60,16 @@ public class CollectionProductRelationships implements Iterable<EntityProduct> {
 					RequestOptions.DEFAULT);
     		
     		if (searchCollectionRefResponse != null) {
-    			searchHits = searchCollectionRefResponse.getHits();
+    			this.searchHits = searchCollectionRefResponse.getHits();
  
     		}
     		else {
-    			searchHits = null;
+    			this.searchHits = null;
     		}
     		
     		
 		} catch (IOException e) {
-			CollectionProductRelationships.log.error("Couldn't get bundle " + lidvid + " from elasticSearch", e);
+			CollectionProductRelationships.log.error("Couldn't get collection " + lidvid + " from elasticSearch", e);
             throw(e);
 		}
 
