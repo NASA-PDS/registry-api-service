@@ -3,284 +3,212 @@ package gov.nasa.pds.api.engineering.elasticsearch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.LinkedList;
 
-import org.elasticsearch.index.query.QueryBuilders;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.WildcardQueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 import gov.nasa.pds.api.engineering.lexer.SearchBaseListener;
 import gov.nasa.pds.api.engineering.lexer.SearchParser;
 
-public class Antlr4SearchListener extends SearchBaseListener {
+public class Antlr4SearchListener extends SearchBaseListener
+{
+	enum conjunctions { AND, OR };
+	enum operation { eq, ge, gt, le, lt, ne };
 	
+	private class QueryError extends RuntimeException{private static final long serialVersionUID = 145252264968900221L;};
+
 	private static final Logger log = LoggerFactory.getLogger(Antlr4SearchListener.class);
 	
-	private BoolQueryBuilder queryQB;
-	private LinkedList<BoolQueryBuilder> queryTermQBs  = new LinkedList<BoolQueryBuilder>();
-	private LinkedList<BoolQueryBuilder> groupQBs = new LinkedList<BoolQueryBuilder>();
-	private LinkedList<BoolQueryBuilder> expressionQBs = new LinkedList<BoolQueryBuilder>();
-	private LinkedList<BoolQueryBuilder> andStatementQBs = new LinkedList<BoolQueryBuilder>();
-	private LinkedList<BoolQueryBuilder> orStatementQBs = new LinkedList<BoolQueryBuilder>();
-	private LinkedList<BoolQueryBuilder> comparisonQBs = new LinkedList<BoolQueryBuilder>();
+	private BoolQueryBuilder query;
+	private boolean wildcard = false;
+	final private Deque<conjunctions> conjunction = new ArrayDeque<conjunctions>(); 
+	final private Deque<BoolQueryBuilder> stack_queries = new ArrayDeque<BoolQueryBuilder>();
+	final private Deque<List<QueryBuilder>> stack_musts = new ArrayDeque<List<QueryBuilder>>();
+	final private Deque<List<QueryBuilder>> stack_nots = new ArrayDeque<List<QueryBuilder>>();
+	final private Deque<List<QueryBuilder>> stack_shoulds = new ArrayDeque<List<QueryBuilder>>();
+	private List<QueryBuilder> musts = new ArrayList<QueryBuilder>();
+	private List<QueryBuilder> nots = new ArrayList<QueryBuilder>();
+	private List<QueryBuilder> shoulds = new ArrayList<QueryBuilder>();
+	private operation operator = null;
 	
-	
-	private String elasticQuery;
-	
-	private Boolean comparisonBoolean;
-	
-	private String rangeOperator;
-	private Boolean includeBoundary;
-	
-	public Antlr4SearchListener(BoolQueryBuilder boolQuery) {
-		
+	public Antlr4SearchListener(BoolQueryBuilder boolQuery)
+	{	
 		super();
-		this.queryQB = boolQuery;
-		
+		this.query = boolQuery;
 	}
 	
 	
 	 @Override
-	 public void enterQuery(SearchParser.QueryContext ctx) {
-		 Antlr4SearchListener.log.debug("enterQuery: " + ctx.getText()); 
-		 this.queryQB = QueryBuilders.boolQuery(); 	
+	 public void enterQuery(SearchParser.QueryContext ctx)
+	 {
+		 Antlr4SearchListener.log.debug("enterQuery: " + ctx.getText());
      }
 	 
 	 @Override
-	 public void exitQuery(SearchParser.QueryContext ctx) {
-		Antlr4SearchListener.log.debug("exitQuery: " + ctx.getText());	 
-		this.queryQB.must(this.queryTermQBs.pollLast());
+	 public void exitQuery(SearchParser.QueryContext ctx)
+	 {
+		 Antlr4SearchListener.log.debug("exitQuery: " + ctx.getText());
+		 if (!this.stack_queries.isEmpty()) throw new QueryError(); // PANIC: unpaired parenthesis
+		 if (!this.conjunction.isEmpty()) throw new QueryError(); // PANIC: AND/OR expression ended prematurely
+
+		 for (QueryBuilder qb : musts) this.query.must(qb);
+		 for (QueryBuilder qb : nots) this.query.mustNot(qb);
+		 for (QueryBuilder qb : shoulds) this.query.should(qb);
 	 }
 	 
 	 @Override
-	 public void enterQueryTerm(SearchParser.QueryTermContext ctx) {
+	 public void enterQueryTerm(SearchParser.QueryTermContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("enter queryterm: " + ctx.getText());
-		 this.queryTermQBs.add(QueryBuilders.boolQuery());	 
-		  
      }
 	 
 	 @Override
-	 public void exitQueryTerm(SearchParser.QueryTermContext ctx) {
+	 public void exitQueryTerm(SearchParser.QueryTermContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("exit queryterm: " + ctx.getText());
-		 if (ctx.comparison() != null) {
-			 this.queryTermQBs.getLast().must(this.comparisonQBs.pollLast());
-		}
-		 else if (ctx.group() != null) {
-			 this.queryTermQBs.getLast().must(this.groupQBs.pollLast());
-		}
-     }
-	 
-	 
+	 }
+
 	 @Override
-	 public void enterGroup(SearchParser.GroupContext ctx) {
+	 public void enterGroup(SearchParser.GroupContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("enter group: " + ctx.getText());
-		 this.groupQBs.add(QueryBuilders.boolQuery());
+		 this.stack_queries.addLast(this.query);
+		 this.stack_musts.add(this.musts);
+		 this.stack_nots.add(this.nots);
+		 this.stack_shoulds.add(this.shoulds);
+		 this.musts = new ArrayList<QueryBuilder>();
+		 this.nots = new ArrayList<QueryBuilder>();
+		 this.shoulds = new ArrayList<QueryBuilder>();
+		 this.query = new BoolQueryBuilder();
      }
 	 
 	 @Override
-	 public void exitGroup(SearchParser.GroupContext ctx) {
+	 public void exitGroup(SearchParser.GroupContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("exit group: " + ctx.getText());
-		 if (ctx.NOT() != null) {
-			 this.groupQBs.getLast().mustNot(this.expressionQBs.pollLast());
-		 }
-		 else {
-			 this.groupQBs.getLast().must(this.expressionQBs.pollLast());
-		 }
+		 BoolQueryBuilder group = this.query;
+		 List<QueryBuilder> musts = this.musts;
+		 List<QueryBuilder> nots = this.nots;
+		 List<QueryBuilder> shoulds = this.shoulds;
+
+		 this.query = this.stack_queries.getLast();
+		 this.musts = this.stack_musts.getLast();
+		 this.nots = this.stack_nots.getLast();
+		 this.shoulds = this.stack_shoulds.getLast();
+
+		 for (QueryBuilder qb : musts) group.must(qb);
+		 for (QueryBuilder qb : nots) group.mustNot(qb);
+		 for (QueryBuilder qb : shoulds) group.should(qb);
+		 
+		 if (ctx.NOT() != null) this.nots.add(group);
+		 else if (conjunction.isEmpty() || conjunction.peekLast() == conjunctions.AND) this.musts.add(group);
+		 else this.shoulds.add(group);
 	 }
 	 
 	 @Override
-	 public void enterExpression(SearchParser.ExpressionContext ctx) {
+	 public void enterExpression(SearchParser.ExpressionContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("enter expression: " + ctx.getText());
-		 this.expressionQBs.add(QueryBuilders.boolQuery());
-		  
 	 }
 	 
-	 
 	 @Override
-	 public void exitExpression(SearchParser.ExpressionContext ctx) {
+	 public void exitExpression(SearchParser.ExpressionContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("exit expression: " + ctx.getText());
-		 if (ctx.queryTerm() != null) {
-			 this.expressionQBs.getLast().must(this.queryTermQBs.pollLast());
-		 }
-		 else if (ctx.andStatement() != null) {
-			 this.expressionQBs.getLast().must(this.andStatementQBs.pollLast());
-		 }
-		 else if (ctx.orStatement() != null) {
-			 this.expressionQBs.getLast().must(this.orStatementQBs.pollLast());
-		 }
+		 this.conjunction.getLast();
 	 }
-	 
-	 
+
 	 @Override
-	 public void enterAndStatement(SearchParser.AndStatementContext ctx) {
+	 public void enterAndStatement(SearchParser.AndStatementContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("enter andStatement: " + ctx.getText());
-		 this.andStatementQBs.add(QueryBuilders.boolQuery());
-		  
+		 this.conjunction.addLast(conjunctions.AND);
 	 }
-	 
+
 	 @Override
-	 public void enterOrStatement(SearchParser.OrStatementContext ctx) {
+	 public void enterOrStatement(SearchParser.OrStatementContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("enter orStatement: " + ctx.getText());
-		 this.orStatementQBs.add(QueryBuilders.boolQuery());
-		 	 
+		 this.conjunction.addLast(conjunctions.OR);
 	 }
-	 
+
 	 @Override
-	 public void exitOrStatement(SearchParser.OrStatementContext ctx)  {
-		 
-		 BoolQueryBuilder currentOrStatementQB = this.orStatementQBs.getLast();
-		 
-		 for (SearchParser.QueryTermContext QTCtx : ctx.queryTerm()) {
-			 currentOrStatementQB.should(this.queryTermQBs.pollLast());
-		 }
-		 currentOrStatementQB.minimumShouldMatch(1);
+	 public void exitOrStatement(SearchParser.OrStatementContext ctx)
+	 {
+		 Antlr4SearchListener.log.debug("exit orStatement: " + ctx.getText());
 	 }
-	 
-	 
+
 	 @Override
-	 public void exitAndStatement(SearchParser.AndStatementContext ctx) {
+	 public void exitAndStatement(SearchParser.AndStatementContext ctx)
+	 {
 		 Antlr4SearchListener.log.debug("exit andStatement: " + ctx.getText());
-		 
-		 for (SearchParser.QueryTermContext QTCtx : ctx.queryTerm()) {
-			 this.andStatementQBs.getLast().must(this.queryTermQBs.pollLast());
-		 }
-		 
 	 }
 
 	 @Override
-	 public void enterComparison(SearchParser.ComparisonContext ctx) {
-	
-		this.comparisonQBs.add(QueryBuilders.boolQuery());
+	 public void enterComparison(SearchParser.ComparisonContext ctx)
+	 {
+		 Antlr4SearchListener.log.debug("enter comparison: " + ctx.getText());
 		 
-		 // termQuery or rangeQuery
-		 this.elasticQuery = null;
-		
-		 // march eq, ne
-		 this.comparisonBoolean = true;
-		
-		 // range (gt, ge, lt, le)
-		 this.rangeOperator = null;
-		 this.includeBoundary = false;
-		 
+		 this.wildcard = ctx.VALUE() != null || ctx.VALUE().getSymbol().getText().contains("*") || ctx.VALUE().getSymbol().getText().contains("?");
  	 }
-	 
-	 
-	 
+
 	@Override
-	public void exitComparison(SearchParser.ComparisonContext ctx) {
+	public void exitComparison(SearchParser.ComparisonContext ctx)
+	{
 		Antlr4SearchListener.log.debug("exit comparison: " + ctx.getText());
+		String left = ctx.FIELD().getSymbol().getText(), right;
+		QueryBuilder comparator = null;
 
-		try {
-			
-			String comparisonLeftArg = 
-					ElasticSearchUtil.jsonPropertyToElasticProperty(ctx.FIELD().getSymbol().getText());
-			Object comparisonRightArg = null; 
-			
-			Method method;
-			QueryBuilder comparisonQB = null;
-			
-			// parse right arg of the comparison
-			if (ctx.STRINGVAL() != null) {
-				this.log.debug("parse string");
-				String rightArg = ctx.STRINGVAL().getSymbol().getText();
-				comparisonRightArg = rightArg.substring(1, rightArg.length() - 1);
-			
-			} else if (ctx.NUMBER() != null){
-				this.log.debug("parse number");
-				comparisonRightArg = Float.parseFloat(ctx.NUMBER().getSymbol().getText());
-					
-			}
-			
-		
-			// apply comparison (match or range)
-			if (this.elasticQuery == "termQuery") {					
-				comparisonQB = (QueryBuilder) QueryBuilders.termQuery(comparisonLeftArg, comparisonRightArg);
-			}
-			else if (this.elasticQuery == "rangeQuery") {
-				comparisonQB = (RangeQueryBuilder) QueryBuilders.rangeQuery(comparisonLeftArg);
-				Method methodRangeOperator = RangeQueryBuilder.class.getDeclaredMethod(this.rangeOperator, Object.class, boolean.class);
-				comparisonQB = (QueryBuilder) methodRangeOperator.invoke(comparisonQB, 
-						comparisonRightArg,
-						this.includeBoundary);
-			}
-			
-			// apply boolean operator on comparison (only for NE operator)
-			if (comparisonQB != null) {
-				if (this.comparisonBoolean) {
-					this.comparisonQBs.getLast().must(comparisonQB);
-				}
-				else {
-					this.comparisonQBs.getLast().mustNot(comparisonQB);
-				}
-			}
-			
-		
-		} catch (SecurityException e) { 
-			Antlr4SearchListener.log.error("SecurityException " + e.getMessage());
-		} catch (NoSuchMethodException e) {	  
-			Antlr4SearchListener.log.error("NoSuchMethodException " + e.getMessage());
-		} catch (IllegalArgumentException e) {
-			Antlr4SearchListener.log.error("IllegalArgumentException " + e.getMessage());
-		} catch (IllegalAccessException e) {
-			Antlr4SearchListener.log.error("IllegalAccessException " + e.getMessage());
-		} catch (InvocationTargetException e) {
-		    Antlr4SearchListener.log.error("InvocationTargetException " + e.getMessage());
+		if (ctx.NUMBER() != null) right = ctx.NUMBER().getSymbol().getText();
+		else if (ctx.STRINGVAL() != null) right = ctx.STRINGVAL().getSymbol().getText();
+		else if (ctx.VALUE() != null) right = ctx.VALUE().getSymbol().getText();
+		else throw new RuntimeException(); // PANIC: listener out of sync with the grammar
+
+		if (this.operator == operation.eq || this.operator == operation.ne)
+		{
+			if (this.wildcard) comparator = new WildcardQueryBuilder(left, right);
+			else comparator = new MatchQueryBuilder(right, left);
 		}
-		
+		else
+		{
+			comparator = new RangeQueryBuilder(left);
+			
+			if (this.operator == operation.ge) ((RangeQueryBuilder)comparator).gte(right);
+			else if (this.operator == operation.gt) ((RangeQueryBuilder)comparator).gt(right);
+			else if (this.operator == operation.le) ((RangeQueryBuilder)comparator).lte(right);
+			else if (this.operator == operation.lt) ((RangeQueryBuilder)comparator).lt(right);
+			else throw new RuntimeException(); // PANIC: listener out of sync with the grammar
+		}
+
+		if (this.operator == operation.ne) this.nots.add(comparator);
+		else if (this.conjunction.isEmpty() || this.conjunction.peekLast() == conjunctions.AND) this.musts.add(comparator);	
+		else this.shoulds.add(comparator);
 	}
 
 	@Override
-	public void enterOperator(SearchParser.OperatorContext ctx) {
+	public void enterOperator(SearchParser.OperatorContext ctx)
+	{
 		Antlr4SearchListener.log.debug("enter operator: " + ctx.getText());
+
+		if (this.wildcard && ctx.EQ() == null && ctx.NE() == null) throw new QueryError();
 		
-		if (ctx.EQ() != null) {
-				Antlr4SearchListener.log.info("Operator is EQ " + ctx.getText());
-				this.elasticQuery = "termQuery";
+		if (ctx.EQ() != null || ctx.NE() != null)
+		{
+			if (this.wildcard) this.operator = operation.eq;
 		}
-		else if (ctx.NE() != null)  {
-			Antlr4SearchListener.log.info("Operator is NE ");
-			this.elasticQuery = "termQuery";
-			this.comparisonBoolean = false;
-			
-		}
-		else if (ctx.GT() != null) {
-			Antlr4SearchListener.log.info("Operator is GT ");
-			this.elasticQuery = "rangeQuery";
-			this.rangeOperator = "from";
-			this.includeBoundary = false;
-		}
-		else if (ctx.GE() != null) {
-			Antlr4SearchListener.log.info("Operator is GE ");
-			this.elasticQuery = "rangeQuery";
-			this.rangeOperator = "from";
-			this.includeBoundary = true;
-		}
-		else if (ctx.LT() != null) {
-			Antlr4SearchListener.log.info("Operator is LT ");
-			this.elasticQuery = "rangeQuery";
-			this.rangeOperator = "to";
-			this.includeBoundary = false;
-		}
-		else if (ctx.LE() != null) {
-			Antlr4SearchListener.log.info("Operator is LE ");
-			this.elasticQuery = "rangeQuery";
-			this.rangeOperator = "to";
-			this.includeBoundary = true;
-		}
-		
 	}
 	 
 	 
-	 public BoolQueryBuilder getBoolQuery() {
-		 return this.queryQB;
+	 public BoolQueryBuilder getBoolQuery()
+	 {
+		 return this.query;
 	 }
-	 
-	 
-	 
-	 
-
 }

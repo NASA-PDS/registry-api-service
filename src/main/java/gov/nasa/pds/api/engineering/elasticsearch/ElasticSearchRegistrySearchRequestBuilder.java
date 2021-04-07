@@ -98,16 +98,15 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 
 		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 		
-		if (queryString != null) {
+		if (queryString != null)
+		{
+			log.info("query: " + queryString);
 			CodePointCharStream input = CharStreams.fromString(queryString);
 	        SearchLexer lex = new SearchLexer(input);
 	        CommonTokenStream tokens = new CommonTokenStream(lex);
-	
 	        SearchParser par = new SearchParser(tokens);
 	        ParseTree tree = par.query();
-	        
-	        ElasticSearchRegistrySearchRequestBuilder.log.info(tree.toStringTree(par));
-	                
+
 	        // Walk it and attach our listener
 	        ParseTreeWalker walker = new ParseTreeWalker();
 	        Antlr4SearchListener listener = new Antlr4SearchListener(boolQuery);
@@ -117,7 +116,8 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 		}
         
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        for (Map.Entry<String, String> e : presetCriteria.entrySet()) {
+        for (Map.Entry<String, String> e : presetCriteria.entrySet())
+        {
         	//example "product_class", "Product_Collection"
         	boolQuery.must(QueryBuilders.termQuery(e.getKey(), e.getValue() ));
         }

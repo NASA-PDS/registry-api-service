@@ -230,9 +230,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.tunnelvisionlabs</groupId>
+			<groupId>org.antlr</groupId>
 			<artifactId>antlr4-runtime</artifactId>
-			<version>4.7</version>
+			<version>4.9.2</version>
 		</dependency>
 
 		<dependency>
