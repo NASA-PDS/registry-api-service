@@ -27,7 +27,7 @@ public class Antlr4SearchListener extends SearchBaseListener
 
 	private static final Logger log = LoggerFactory.getLogger(Antlr4SearchListener.class);
 	
-	private BoolQueryBuilder query;
+	private BoolQueryBuilder query = new BoolQueryBuilder();
 	private boolean wildcard = false;
 	final private Deque<conjunctions> conjunction = new ArrayDeque<conjunctions>(); 
 	final private Deque<BoolQueryBuilder> stack_queries = new ArrayDeque<BoolQueryBuilder>();
@@ -46,16 +46,11 @@ public class Antlr4SearchListener extends SearchBaseListener
 	}
 	
 	
-    public Antlr4SearchListener() {
-		
-		super();
-		this.queryQB = QueryBuilders.boolQuery();
-		
+    public Antlr4SearchListener()
+    {
+		super();		
 	}
-	
-	
-	
-	
+
 	 @Override
 	 public void enterQuery(SearchParser.QueryContext ctx)
 	 {
