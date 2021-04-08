@@ -39,13 +39,6 @@ public class Antlr4SearchListener extends SearchBaseListener
 	private List<QueryBuilder> shoulds = new ArrayList<QueryBuilder>();
 	private operation operator = null;
 	
-	public Antlr4SearchListener(BoolQueryBuilder boolQuery)
-	{	
-		super();
-		this.query = boolQuery;
-	}
-	
-	
     public Antlr4SearchListener()
     {
 		super();		
@@ -85,7 +78,7 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 public void enterGroup(SearchParser.GroupContext ctx)
 	 {
 		 Antlr4SearchListener.log.debug("enter group: " + ctx.getText());
-		 this.stack_queries.addLast(this.query);
+		 this.stack_queries.push(this.query);
 		 this.stack_musts.add(this.musts);
 		 this.stack_nots.add(this.nots);
 		 this.stack_shoulds.add(this.shoulds);
@@ -104,17 +97,17 @@ public class Antlr4SearchListener extends SearchBaseListener
 		 List<QueryBuilder> nots = this.nots;
 		 List<QueryBuilder> shoulds = this.shoulds;
 
-		 this.query = this.stack_queries.getLast();
-		 this.musts = this.stack_musts.getLast();
-		 this.nots = this.stack_nots.getLast();
-		 this.shoulds = this.stack_shoulds.getLast();
+		 this.query = this.stack_queries.pop();
+		 this.musts = this.stack_musts.pop();
+		 this.nots = this.stack_nots.pop();
+		 this.shoulds = this.stack_shoulds.pop();
 
 		 for (QueryBuilder qb : musts) group.must(qb);
 		 for (QueryBuilder qb : nots) group.mustNot(qb);
 		 for (QueryBuilder qb : shoulds) group.should(qb);
 		 
 		 if (ctx.NOT() != null) this.nots.add(group);
-		 else if (conjunction.isEmpty() || conjunction.peekLast() == conjunctions.AND) this.musts.add(group);
+		 else if (conjunction.isEmpty() || conjunction.peek() == conjunctions.AND) this.musts.add(group);
 		 else this.shoulds.add(group);
 	 }
 	 
@@ -128,21 +121,21 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 public void exitExpression(SearchParser.ExpressionContext ctx)
 	 {
 		 Antlr4SearchListener.log.debug("exit expression: " + ctx.getText());
-		 this.conjunction.getLast();
+		 if (!this.conjunction.isEmpty()) this.conjunction.pop();
 	 }
 
 	 @Override
 	 public void enterAndStatement(SearchParser.AndStatementContext ctx)
 	 {
 		 Antlr4SearchListener.log.debug("enter andStatement: " + ctx.getText());
-		 this.conjunction.addLast(conjunctions.AND);
+		 this.conjunction.push(conjunctions.AND);
 	 }
 
 	 @Override
 	 public void enterOrStatement(SearchParser.OrStatementContext ctx)
 	 {
 		 Antlr4SearchListener.log.debug("enter orStatement: " + ctx.getText());
-		 this.conjunction.addLast(conjunctions.OR);
+		 this.conjunction.push(conjunctions.OR);
 	 }
 
 	 @Override
@@ -194,7 +187,7 @@ public class Antlr4SearchListener extends SearchBaseListener
 		}
 
 		if (this.operator == operation.ne) this.nots.add(comparator);
-		else if (this.conjunction.isEmpty() || this.conjunction.peekLast() == conjunctions.AND) this.musts.add(comparator);	
+		else if (this.conjunction.isEmpty() || this.conjunction.peek() == conjunctions.AND) this.musts.add(comparator);	
 		else this.shoulds.add(comparator);
 	}
 
