@@ -45,15 +45,8 @@ public class Antlr4SearchListener extends SearchBaseListener
 	}
 
 	 @Override
-	 public void enterQuery(SearchParser.QueryContext ctx)
-	 {
-		 Antlr4SearchListener.log.debug("enterQuery: " + ctx.getText());
-     }
-	 
-	 @Override
 	 public void exitQuery(SearchParser.QueryContext ctx)
 	 {
-		 Antlr4SearchListener.log.debug("exitQuery: " + ctx.getText());
 		 if (!this.stack_queries.isEmpty()) throw new QueryError(); // PANIC: unpaired parenthesis
 		 if (!this.conjunction.isEmpty()) throw new QueryError(); // PANIC: AND/OR expression ended prematurely
 
@@ -62,18 +55,6 @@ public class Antlr4SearchListener extends SearchBaseListener
 		 for (QueryBuilder qb : shoulds) this.query.should(qb);
 	 }
 	 
-	 @Override
-	 public void enterQueryTerm(SearchParser.QueryTermContext ctx)
-	 {
-		 Antlr4SearchListener.log.debug("enter queryterm: " + ctx.getText());
-     }
-	 
-	 @Override
-	 public void exitQueryTerm(SearchParser.QueryTermContext ctx)
-	 {
-		 Antlr4SearchListener.log.debug("exit queryterm: " + ctx.getText());
-	 }
-
 	 @Override
 	 public void enterGroup(SearchParser.GroupContext ctx)
 	 {
@@ -112,15 +93,8 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 }
 	 
 	 @Override
-	 public void enterExpression(SearchParser.ExpressionContext ctx)
-	 {
-		 Antlr4SearchListener.log.debug("enter expression: " + ctx.getText());
-	 }
-	 
-	 @Override
 	 public void exitExpression(SearchParser.ExpressionContext ctx)
 	 {
-		 Antlr4SearchListener.log.debug("exit expression: " + ctx.getText());
 		 if (!this.conjunction.isEmpty()) this.conjunction.pop();
 	 }
 
@@ -153,15 +127,12 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 @Override
 	 public void enterComparison(SearchParser.ComparisonContext ctx)
 	 {
-		 Antlr4SearchListener.log.debug("enter comparison: " + ctx.getText());
-		 
-		 this.wildcard = ctx.VALUE() != null || ctx.VALUE().getSymbol().getText().contains("*") || ctx.VALUE().getSymbol().getText().contains("?");
+		 this.wildcard = ctx.VALUE() != null && (ctx.VALUE().getSymbol().getText().contains("*") || ctx.VALUE().getSymbol().getText().contains("?"));
  	 }
 
 	@Override
 	public void exitComparison(SearchParser.ComparisonContext ctx)
 	{
-		Antlr4SearchListener.log.debug("exit comparison: " + ctx.getText());
 		String left = ctx.FIELD().getSymbol().getText(), right;
 		QueryBuilder comparator = null;
 
@@ -173,7 +144,7 @@ public class Antlr4SearchListener extends SearchBaseListener
 		if (this.operator == operation.eq || this.operator == operation.ne)
 		{
 			if (this.wildcard) comparator = new WildcardQueryBuilder(left, right);
-			else comparator = new MatchQueryBuilder(right, left);
+			else comparator = new MatchQueryBuilder(left, right);
 		}
 		else
 		{
@@ -194,14 +165,15 @@ public class Antlr4SearchListener extends SearchBaseListener
 	@Override
 	public void enterOperator(SearchParser.OperatorContext ctx)
 	{
-		Antlr4SearchListener.log.debug("enter operator: " + ctx.getText());
-
 		if (this.wildcard && ctx.EQ() == null && ctx.NE() == null) throw new QueryError();
 		
-		if (ctx.EQ() != null || ctx.NE() != null)
-		{
-			if (this.wildcard) this.operator = operation.eq;
-		}
+		if (ctx.EQ() != null) this.operator = operation.eq;
+		else if (ctx.GE() != null) this.operator = operation.ge;
+		else if (ctx.GT() != null) this.operator = operation.gt;
+		else if (ctx.LE() != null) this.operator = operation.le;
+		else if (ctx.LT() != null) this.operator = operation.lt;
+		else if (ctx.NE() != null) this.operator = operation.ne;
+		else throw new RuntimeException(); // PANIC: listener out of sync with the grammar
 	}
 	 
 	 

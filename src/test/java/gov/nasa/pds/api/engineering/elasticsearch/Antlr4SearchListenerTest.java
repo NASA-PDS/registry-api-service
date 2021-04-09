@@ -6,7 +6,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.WildcardQueryBuilder;
 
 import gov.nasa.pds.api.engineering.lexer.SearchLexer;
@@ -19,10 +21,13 @@ public class Antlr4SearchListenerTest
 		Antlr4SearchListenerTest self = new Antlr4SearchListenerTest();
 		boolean summary=true;
 		
-		
-		summary &= self.verify_01();
-		summary &= self.verify_02();
-		System.out.println("test as a " + (summary ? "success" : "FAILURE"));
+		summary &= self.verify_01(); // wildcard eq
+		summary &= self.verify_02(); // wildcard ne
+		summary &= self.verify_03(); // not a wildcard with * and ? in it
+		summary &= self.verify_04(); // grouping
+		summary &= self.verify_05(); // grouping gt and lt
+		summary &= self.verify_06(); // grouping ge and le
+		System.out.println("test is a " + (summary ? "success" : "FAILURE"));
 	}
 
 	private BoolQueryBuilder run (String query)
@@ -46,21 +51,56 @@ public class Antlr4SearchListenerTest
 	private boolean verify_01()
 	{
 		boolean result = true;
-		BoolQueryBuilder query = this.run("lid eq *pdart14_meap*");
+		String qs = "lid eq *pdart14_meap";
+		BoolQueryBuilder query = this.run(qs);
 		
 		result &= query.must().size() == 1;
 		result &= query.mustNot().size() == 0;
 		result &= query.should().size() == 0;
 		result &= query.must().get(0) instanceof WildcardQueryBuilder;
 		result &= ((WildcardQueryBuilder)query.must().get(0)).fieldName().equals("lid");
-		result &= ((WildcardQueryBuilder)query.must().get(0)).value().equals("*pdart14_meap*");
+		result &= ((WildcardQueryBuilder)query.must().get(0)).value().equals("*pdart14_meap");
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
 		return result;
 	}
 
 	private boolean verify_02()
 	{
 		boolean result = true;
-		BoolQueryBuilder query = this.run("( lid eq *pdart14_meap* )");
+		String qs = "lid ne pdart14_meap?";
+		BoolQueryBuilder query = this.run(qs);
+		
+		result &= query.must().size() == 0;
+		result &= query.mustNot().size() == 1;
+		result &= query.should().size() == 0;
+		result &= query.mustNot().get(0) instanceof WildcardQueryBuilder;
+		result &= ((WildcardQueryBuilder)query.mustNot().get(0)).fieldName().equals("lid");
+		result &= ((WildcardQueryBuilder)query.mustNot().get(0)).value().equals("pdart14_meap?");
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
+		return result;
+	}
+
+	private boolean verify_03()
+	{
+		boolean result = true;
+		String qs = "lid eq \"*pdart14_meap?\"";
+		BoolQueryBuilder query = this.run(qs);
+		
+		result &= query.must().size() == 1;
+		result &= query.mustNot().size() == 0;
+		result &= query.should().size() == 0;
+		result &= query.must().get(0) instanceof MatchQueryBuilder;
+		result &= ((MatchQueryBuilder)query.must().get(0)).fieldName().equals("lid");
+		result &= ((MatchQueryBuilder)query.must().get(0)).value().equals("\"*pdart14_meap?\"");
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
+		return result;
+	}
+
+	private boolean verify_04()
+	{
+		boolean result = true;
+		String qs = "( lid eq *pdart14_meap* )";
+		BoolQueryBuilder query = this.run(qs);
 		
 		result &= query.must().size() == 1;
 		result &= query.mustNot().size() == 0;
@@ -73,12 +113,76 @@ public class Antlr4SearchListenerTest
 		result &= query.must().get(0) instanceof WildcardQueryBuilder;
 		result &= ((WildcardQueryBuilder)query.must().get(0)).fieldName().equals("lid");
 		result &= ((WildcardQueryBuilder)query.must().get(0)).value().equals("*pdart14_meap*");
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
+		return result;
+	}
+
+	private boolean verify_05()
+	{
+		boolean result = true;
+		String qs = "( timestamp gt 12 and timestamp lt 27 )";
+		BoolQueryBuilder query = this.run(qs);
+
+		result &= query.must().size() == 1;
+		result &= query.mustNot().size() == 0;
+		result &= query.should().size() == 0;
+		result &= query.must().get(0) instanceof BoolQueryBuilder;
+		query = (BoolQueryBuilder)query.must().get(0);
+		result &= query.must().size() == 2;
+		result &= query.mustNot().size() == 0;
+		result &= query.should().size() == 0;
+		result &= query.must().get(0) instanceof RangeQueryBuilder;
+		result &= query.must().get(1) instanceof RangeQueryBuilder;
+		result &= ((RangeQueryBuilder)query.must().get(0)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)query.must().get(0)).from().equals("12");
+		result &= ((RangeQueryBuilder)query.must().get(0)).to() == null;
+		result &= !((RangeQueryBuilder)query.must().get(0)).includeLower();
+		result &= ((RangeQueryBuilder)query.must().get(0)).includeUpper();
+		result &= ((RangeQueryBuilder)query.must().get(1)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)query.must().get(1)).from() == null;
+		result &= ((RangeQueryBuilder)query.must().get(1)).to().equals("27");
+		result &= ((RangeQueryBuilder)query.must().get(1)).includeLower();
+		result &= !((RangeQueryBuilder)query.must().get(1)).includeUpper();
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
+		return result;
+	}
+
+	private boolean verify_06()
+	{
+		boolean result = true;
+		String qs = "( timestamp ge 12 and timestamp le 27 )";
+		BoolQueryBuilder query = this.run(qs);
+
+		result &= query.must().size() == 1;
+		result &= query.mustNot().size() == 0;
+		result &= query.should().size() == 0;
+		result &= query.must().get(0) instanceof BoolQueryBuilder;
+		query = (BoolQueryBuilder)query.must().get(0);
+		result &= query.must().size() == 2;
+		result &= query.mustNot().size() == 0;
+		result &= query.should().size() == 0;
+		result &= query.must().get(0) instanceof RangeQueryBuilder;
+		result &= query.must().get(1) instanceof RangeQueryBuilder;
+		result &= ((RangeQueryBuilder)query.must().get(0)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)query.must().get(0)).from().equals("12");
+		result &= ((RangeQueryBuilder)query.must().get(0)).to() == null;
+		result &= ((RangeQueryBuilder)query.must().get(0)).includeLower();
+		result &= ((RangeQueryBuilder)query.must().get(0)).includeUpper();
+		result &= ((RangeQueryBuilder)query.must().get(1)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)query.must().get(1)).from() == null;
+		result &= ((RangeQueryBuilder)query.must().get(1)).to().equals("27");
+		result &= ((RangeQueryBuilder)query.must().get(1)).includeLower();
+		result &= ((RangeQueryBuilder)query.must().get(1)).includeUpper();
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
 		return result;
 	}
 
 	private boolean verify_99()
 	{
 		boolean result = true;
+		String qs = "";
+		BoolQueryBuilder query = this.run(qs);
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
 		return result;
 	}
 }
