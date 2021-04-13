@@ -1,8 +1,10 @@
 package gov.nasa.pds.api.engineering.elasticsearch;
 
+import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -27,6 +29,9 @@ public class Antlr4SearchListenerTest
 		summary &= self.verify_04(); // grouping
 		summary &= self.verify_05(); // grouping gt and lt
 		summary &= self.verify_06(); // grouping ge and le
+		summary &= self.verify_07(); // not grouping ge and le
+		summary &= self.verify_08(); // nested grouping
+		summary &= self.verify_98(); // check exceptions
 		System.out.println("test is a " + (summary ? "success" : "FAILURE"));
 	}
 
@@ -36,6 +41,7 @@ public class Antlr4SearchListenerTest
         SearchLexer lex = new SearchLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lex);
         SearchParser par = new SearchParser(tokens);
+        par.setErrorHandler(new BailErrorStrategy());
         ParseTree tree = par.query();
         // Walk it and attach our listener
         ParseTreeWalker walker = new ParseTreeWalker();
@@ -105,11 +111,6 @@ public class Antlr4SearchListenerTest
 		result &= query.must().size() == 1;
 		result &= query.mustNot().size() == 0;
 		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof BoolQueryBuilder;
-		query = (BoolQueryBuilder)query.must().get(0);
-		result &= query.must().size() == 1;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
 		result &= query.must().get(0) instanceof WildcardQueryBuilder;
 		result &= ((WildcardQueryBuilder)query.must().get(0)).fieldName().equals("lid");
 		result &= ((WildcardQueryBuilder)query.must().get(0)).value().equals("*pdart14_meap*");
@@ -123,11 +124,6 @@ public class Antlr4SearchListenerTest
 		String qs = "( timestamp gt 12 and timestamp lt 27 )";
 		BoolQueryBuilder query = this.run(qs);
 
-		result &= query.must().size() == 1;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof BoolQueryBuilder;
-		query = (BoolQueryBuilder)query.must().get(0);
 		result &= query.must().size() == 2;
 		result &= query.mustNot().size() == 0;
 		result &= query.should().size() == 0;
@@ -153,11 +149,6 @@ public class Antlr4SearchListenerTest
 		String qs = "( timestamp ge 12 and timestamp le 27 )";
 		BoolQueryBuilder query = this.run(qs);
 
-		result &= query.must().size() == 1;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof BoolQueryBuilder;
-		query = (BoolQueryBuilder)query.must().get(0);
 		result &= query.must().size() == 2;
 		result &= query.mustNot().size() == 0;
 		result &= query.should().size() == 0;
@@ -174,6 +165,99 @@ public class Antlr4SearchListenerTest
 		result &= ((RangeQueryBuilder)query.must().get(1)).includeLower();
 		result &= ((RangeQueryBuilder)query.must().get(1)).includeUpper();
 		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
+		return result;
+	}
+
+	private boolean verify_07()
+	{
+		boolean result = true;
+		String qs = "not ( timestamp ge 12 and timestamp le 27 )";
+		BoolQueryBuilder query = this.run(qs);
+
+		result &= query.must().size() == 2;
+		result &= query.mustNot().size() == 0;
+		result &= query.should().size() == 0;
+		result &= query.must().get(0) instanceof RangeQueryBuilder;
+		result &= query.must().get(1) instanceof RangeQueryBuilder;
+		result &= ((RangeQueryBuilder)query.must().get(0)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)query.must().get(0)).from().equals("12");
+		result &= ((RangeQueryBuilder)query.must().get(0)).to() == null;
+		result &= ((RangeQueryBuilder)query.must().get(0)).includeLower();
+		result &= ((RangeQueryBuilder)query.must().get(0)).includeUpper();
+		result &= ((RangeQueryBuilder)query.must().get(1)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)query.must().get(1)).from() == null;
+		result &= ((RangeQueryBuilder)query.must().get(1)).to().equals("27");
+		result &= ((RangeQueryBuilder)query.must().get(1)).includeLower();
+		result &= ((RangeQueryBuilder)query.must().get(1)).includeUpper();
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
+		return result;
+	}
+
+	private boolean verify_08()
+	{
+		boolean result = true;
+		String qs = "( ( timestamp ge 12 and timestamp le 27 ) or ( timestamp gt 12 and timestamp lt 27 ) )";
+		BoolQueryBuilder nest, query = this.run(qs);
+
+		result &= query.must().size() == 0;
+		result &= query.mustNot().size() == 0;
+		result &= query.should().size() == 2;
+		result &= query.should().get(0) instanceof BoolQueryBuilder;
+		nest = (BoolQueryBuilder)query.should().get(0);
+		result &= nest.must().size() == 2;
+		result &= nest.mustNot().size() == 0;
+		result &= nest.should().size() == 0;
+		result &= nest.must().get(0) instanceof RangeQueryBuilder;
+		result &= nest.must().get(1) instanceof RangeQueryBuilder;
+		result &= ((RangeQueryBuilder)nest.must().get(0)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)nest.must().get(0)).from().equals("12");
+		result &= ((RangeQueryBuilder)nest.must().get(0)).to() == null;
+		result &= ((RangeQueryBuilder)nest.must().get(0)).includeLower();
+		result &= ((RangeQueryBuilder)nest.must().get(0)).includeUpper();
+		result &= ((RangeQueryBuilder)nest.must().get(1)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)nest.must().get(1)).from() == null;
+		result &= ((RangeQueryBuilder)nest.must().get(1)).to().equals("27");
+		result &= ((RangeQueryBuilder)nest.must().get(1)).includeLower();
+		result &= ((RangeQueryBuilder)nest.must().get(1)).includeUpper();
+		nest = (BoolQueryBuilder)query.should().get(1);
+		result &= nest.must().size() == 2;
+		result &= nest.mustNot().size() == 0;
+		result &= nest.should().size() == 0;
+		result &= nest.must().get(0) instanceof RangeQueryBuilder;
+		result &= nest.must().get(1) instanceof RangeQueryBuilder;
+		result &= ((RangeQueryBuilder)nest.must().get(0)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)nest.must().get(0)).from().equals("12");
+		result &= ((RangeQueryBuilder)nest.must().get(0)).to() == null;
+		result &= !((RangeQueryBuilder)nest.must().get(0)).includeLower();
+		result &= ((RangeQueryBuilder)nest.must().get(0)).includeUpper();
+		result &= ((RangeQueryBuilder)nest.must().get(1)).fieldName().equals("timestamp");
+		result &= ((RangeQueryBuilder)nest.must().get(1)).from() == null;
+		result &= ((RangeQueryBuilder)nest.must().get(1)).to().equals("27");
+		result &= ((RangeQueryBuilder)nest.must().get(1)).includeLower();
+		result &= !((RangeQueryBuilder)nest.must().get(1)).includeUpper();
+		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
+		return result;
+	}
+
+	private boolean verify_98()
+	{
+		boolean result = true, iresult;
+		String fails[] = {"( a eq b", "a eq b )", "not( a eq b )",
+				          "a eq b and c eq d and", "( a eq b and c eq d and )",
+				          "( a eq b and c eq d or e eq f )"};
+
+		for (int i = 0 ; i < fails.length ; i++)
+		{
+			try
+			{
+				BoolQueryBuilder query = this.run(fails[i]);
+				iresult = false;
+			}
+			catch (ParseCancellationException pce) { iresult = true; }
+			catch (RuntimeException re) { iresult = false; System.out.println("wrong excpetion"); }
+			System.out.println((iresult ? "success" : "FAILURE") + " - "  + fails[i]);
+			result &= iresult;
+		}
 		return result;
 	}
 

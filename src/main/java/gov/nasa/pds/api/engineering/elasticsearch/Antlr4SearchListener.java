@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.WildcardQueryBuilder;
@@ -22,18 +23,18 @@ public class Antlr4SearchListener extends SearchBaseListener
 {
 	enum conjunctions { AND, OR };
 	enum operation { eq, ge, gt, le, lt, ne };
-	
-	private class QueryError extends RuntimeException{private static final long serialVersionUID = 145252264968900221L;};
 
 	private static final Logger log = LoggerFactory.getLogger(Antlr4SearchListener.class);
 	
 	private BoolQueryBuilder query = new BoolQueryBuilder();
 	private boolean wildcard = false;
-	final private Deque<conjunctions> conjunction = new ArrayDeque<conjunctions>(); 
+	private conjunctions conjunction = conjunctions.AND;
+	final private Deque<conjunctions> stack_conjunction = new ArrayDeque<conjunctions>(); 
 	final private Deque<BoolQueryBuilder> stack_queries = new ArrayDeque<BoolQueryBuilder>();
 	final private Deque<List<QueryBuilder>> stack_musts = new ArrayDeque<List<QueryBuilder>>();
 	final private Deque<List<QueryBuilder>> stack_nots = new ArrayDeque<List<QueryBuilder>>();
-	final private Deque<List<QueryBuilder>> stack_shoulds = new ArrayDeque<List<QueryBuilder>>();
+	final private Deque<List<QueryBuilder>> stack_shoulds = new ArrayDeque<List<QueryBuilder>>(); 
+	int depth = 0;
 	private List<QueryBuilder> musts = new ArrayList<QueryBuilder>();
 	private List<QueryBuilder> nots = new ArrayList<QueryBuilder>();
 	private List<QueryBuilder> shoulds = new ArrayList<QueryBuilder>();
@@ -47,9 +48,6 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 @Override
 	 public void exitQuery(SearchParser.QueryContext ctx)
 	 {
-		 if (!this.stack_queries.isEmpty()) throw new QueryError(); // PANIC: unpaired parenthesis
-		 if (!this.conjunction.isEmpty()) throw new QueryError(); // PANIC: AND/OR expression ended prematurely
-
 		 for (QueryBuilder qb : musts) this.query.must(qb);
 		 for (QueryBuilder qb : nots) this.query.mustNot(qb);
 		 for (QueryBuilder qb : shoulds) this.query.should(qb);
@@ -59,14 +57,19 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 public void enterGroup(SearchParser.GroupContext ctx)
 	 {
 		 Antlr4SearchListener.log.debug("enter group: " + ctx.getText());
+		 this.stack_conjunction.push(this.conjunction);
+		 this.stack_musts.push(this.musts);
+		 this.stack_nots.push(this.nots);
 		 this.stack_queries.push(this.query);
-		 this.stack_musts.add(this.musts);
-		 this.stack_nots.add(this.nots);
-		 this.stack_shoulds.add(this.shoulds);
+		 this.stack_shoulds.push(this.shoulds);
+		 this.conjunction = conjunctions.AND;
 		 this.musts = new ArrayList<QueryBuilder>();
 		 this.nots = new ArrayList<QueryBuilder>();
 		 this.shoulds = new ArrayList<QueryBuilder>();
-		 this.query = new BoolQueryBuilder();
+
+		 if (0 < this.depth) { this.query = new BoolQueryBuilder(); }
+		 
+		 this.depth++;
      }
 	 
 	 @Override
@@ -78,38 +81,43 @@ public class Antlr4SearchListener extends SearchBaseListener
 		 List<QueryBuilder> nots = this.nots;
 		 List<QueryBuilder> shoulds = this.shoulds;
 
-		 this.query = this.stack_queries.pop();
+		 this.conjunction = this.stack_conjunction.pop();
+		 this.depth--;
 		 this.musts = this.stack_musts.pop();
 		 this.nots = this.stack_nots.pop();
+		 this.query = this.stack_queries.pop();
 		 this.shoulds = this.stack_shoulds.pop();
 
 		 for (QueryBuilder qb : musts) group.must(qb);
 		 for (QueryBuilder qb : nots) group.mustNot(qb);
 		 for (QueryBuilder qb : shoulds) group.should(qb);
-		 
-		 if (ctx.NOT() != null) this.nots.add(group);
-		 else if (conjunction.isEmpty() || conjunction.peek() == conjunctions.AND) this.musts.add(group);
-		 else this.shoulds.add(group);
+
+		 if (0 < depth)
+		 {
+			 if (ctx.NOT() != null) this.nots.add(group);
+			 else if (this.conjunction == conjunctions.AND) this.musts.add(group);
+			 else this.shoulds.add(group);
+		 }
 	 }
 	 
 	 @Override
 	 public void exitExpression(SearchParser.ExpressionContext ctx)
 	 {
-		 if (!this.conjunction.isEmpty()) this.conjunction.pop();
+		 //if (!this.conjunction.isEmpty() && this.stack_queries.size() > 1) this.conjunction.pop();
 	 }
 
 	 @Override
 	 public void enterAndStatement(SearchParser.AndStatementContext ctx)
 	 {
 		 Antlr4SearchListener.log.debug("enter andStatement: " + ctx.getText());
-		 this.conjunction.push(conjunctions.AND);
+		 this.conjunction = conjunctions.AND;
 	 }
 
 	 @Override
 	 public void enterOrStatement(SearchParser.OrStatementContext ctx)
 	 {
 		 Antlr4SearchListener.log.debug("enter orStatement: " + ctx.getText());
-		 this.conjunction.push(conjunctions.OR);
+		 this.conjunction = conjunctions.OR;
 	 }
 
 	 @Override
@@ -158,14 +166,14 @@ public class Antlr4SearchListener extends SearchBaseListener
 		}
 
 		if (this.operator == operation.ne) this.nots.add(comparator);
-		else if (this.conjunction.isEmpty() || this.conjunction.peek() == conjunctions.AND) this.musts.add(comparator);	
+		else if (this.conjunction == conjunctions.AND) this.musts.add(comparator);	
 		else this.shoulds.add(comparator);
 	}
 
 	@Override
 	public void enterOperator(SearchParser.OperatorContext ctx)
 	{
-		if (this.wildcard && ctx.EQ() == null && ctx.NE() == null) throw new QueryError();
+		if (this.wildcard && ctx.EQ() == null && ctx.NE() == null) throw new ParseCancellationException();
 		
 		if (ctx.EQ() != null) this.operator = operation.eq;
 		else if (ctx.GE() != null) this.operator = operation.ge;
