@@ -56,7 +56,6 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 @Override
 	 public void enterGroup(SearchParser.GroupContext ctx)
 	 {
-		 Antlr4SearchListener.log.debug("enter group: " + ctx.getText());
 		 this.stack_conjunction.push(this.conjunction);
 		 this.stack_musts.push(this.musts);
 		 this.stack_nots.push(this.nots);
@@ -75,7 +74,6 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 @Override
 	 public void exitGroup(SearchParser.GroupContext ctx)
 	 {
-		 Antlr4SearchListener.log.debug("exit group: " + ctx.getText());
 		 BoolQueryBuilder group = this.query;
 		 List<QueryBuilder> musts = this.musts;
 		 List<QueryBuilder> nots = this.nots;
@@ -101,35 +99,15 @@ public class Antlr4SearchListener extends SearchBaseListener
 	 }
 	 
 	 @Override
-	 public void exitExpression(SearchParser.ExpressionContext ctx)
-	 {
-		 //if (!this.conjunction.isEmpty() && this.stack_queries.size() > 1) this.conjunction.pop();
-	 }
-
-	 @Override
 	 public void enterAndStatement(SearchParser.AndStatementContext ctx)
 	 {
-		 Antlr4SearchListener.log.debug("enter andStatement: " + ctx.getText());
 		 this.conjunction = conjunctions.AND;
 	 }
 
 	 @Override
 	 public void enterOrStatement(SearchParser.OrStatementContext ctx)
 	 {
-		 Antlr4SearchListener.log.debug("enter orStatement: " + ctx.getText());
 		 this.conjunction = conjunctions.OR;
-	 }
-
-	 @Override
-	 public void exitOrStatement(SearchParser.OrStatementContext ctx)
-	 {
-		 Antlr4SearchListener.log.debug("exit orStatement: " + ctx.getText());
-	 }
-
-	 @Override
-	 public void exitAndStatement(SearchParser.AndStatementContext ctx)
-	 {
-		 Antlr4SearchListener.log.debug("exit andStatement: " + ctx.getText());
 	 }
 
 	 @Override
