@@ -26,7 +26,7 @@ COPY src /usr/local/registry-api-service-${VERSION}/src
 # Resources shared with the rest of the world
 EXPOSE 8080
 
-# Build the self-signed cert, then application and deploy it inside the container
+# Build then generate/store the self signed cert.
 RUN cd /usr/local/registry-api-service-${VERSION} \
   && mvn clean \
   && mvn install \
