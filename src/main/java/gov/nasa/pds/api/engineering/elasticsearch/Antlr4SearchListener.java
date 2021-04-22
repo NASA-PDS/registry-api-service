@@ -86,24 +86,20 @@ public class Antlr4SearchListener extends SearchBaseListener
 		 this.query = this.stack_queries.pop();
 		 this.shoulds = this.stack_shoulds.pop();
 
-		 if (this.depth == 0 && ctx.NOT() != null)
-		 {
-			 for (QueryBuilder qb : nots) group.must(qb);
-			 for (QueryBuilder qb : musts) group.mustNot(qb);
-			 for (QueryBuilder qb : shoulds) group.should(qb);
-		 }
-		 else
-		 {
-			 for (QueryBuilder qb : musts) group.must(qb);
-			 for (QueryBuilder qb : nots) group.mustNot(qb);
-			 for (QueryBuilder qb : shoulds) group.should(qb);
-		 }
+		 for (QueryBuilder qb : musts) group.must(qb);
+		 for (QueryBuilder qb : nots) group.mustNot(qb);
+		 for (QueryBuilder qb : shoulds) group.should(qb);
 
 		 if (0 < depth)
 		 {
 			 if (ctx.NOT() != null) this.nots.add(group);
 			 else if (this.conjunction == conjunctions.AND) this.musts.add(group);
 			 else this.shoulds.add(group);
+		 }
+		 else if (ctx.NOT() != null)
+		 {
+			 this.query = new BoolQueryBuilder();
+			 this.nots.add(group);
 		 }
 	 }
 	 

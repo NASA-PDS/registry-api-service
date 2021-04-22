@@ -164,20 +164,25 @@ public class Antlr4SearchListenerTest
 		BoolQueryBuilder query = this.run(qs);
 
 		Assertions.assertEquals (query.must().size(), 0);
-		Assertions.assertEquals (query.mustNot().size(), 2);
+		Assertions.assertEquals (query.mustNot().size(), 1);
 		Assertions.assertEquals (query.should().size(), 0);
-		Assertions.assertTrue (query.mustNot().get(0) instanceof RangeQueryBuilder);
-		Assertions.assertTrue (query.mustNot().get(1) instanceof RangeQueryBuilder);
-		Assertions.assertEquals (((RangeQueryBuilder)query.mustNot().get(0)).fieldName(), "timestamp");
-		Assertions.assertEquals (((RangeQueryBuilder)query.mustNot().get(0)).from(), "12");
-		Assertions.assertNull (((RangeQueryBuilder)query.mustNot().get(0)).to());
-		Assertions.assertTrue (((RangeQueryBuilder)query.mustNot().get(0)).includeLower());
-		Assertions.assertTrue (((RangeQueryBuilder)query.mustNot().get(0)).includeUpper());
-		Assertions.assertEquals (((RangeQueryBuilder)query.mustNot().get(1)).fieldName(), "timestamp");
-		Assertions.assertNull (((RangeQueryBuilder)query.mustNot().get(1)).from());
-		Assertions.assertEquals (((RangeQueryBuilder)query.mustNot().get(1)).to(), "27");
-		Assertions.assertTrue (((RangeQueryBuilder)query.mustNot().get(1)).includeLower());
-		Assertions.assertTrue (((RangeQueryBuilder)query.mustNot().get(1)).includeUpper());
+		Assertions.assertTrue (query.mustNot().get(0) instanceof BoolQueryBuilder);
+		query = (BoolQueryBuilder)query.mustNot().get(0);
+		Assertions.assertEquals (query.must().size(), 2);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.must().get(0) instanceof RangeQueryBuilder);
+		Assertions.assertTrue (query.must().get(1) instanceof RangeQueryBuilder);
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(0)).fieldName(), "timestamp");
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(0)).from(), "12");
+		Assertions.assertNull (((RangeQueryBuilder)query.must().get(0)).to());
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(0)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(0)).includeUpper());
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(1)).fieldName(), "timestamp");
+		Assertions.assertNull (((RangeQueryBuilder)query.must().get(1)).from());
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(1)).to(), "27");
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(1)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(1)).includeUpper());
 	}
 
 	@Test
