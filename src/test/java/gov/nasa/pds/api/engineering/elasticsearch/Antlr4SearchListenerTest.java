@@ -12,27 +12,26 @@ import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.WildcardQueryBuilder;
+import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.function.Executable;
 
 import gov.nasa.pds.api.engineering.lexer.SearchLexer;
 import gov.nasa.pds.api.engineering.lexer.SearchParser;
 
 public class Antlr4SearchListenerTest
 {
-	public static void main(String[] args)
+	private class NegativeTester implements Executable
 	{
-		Antlr4SearchListenerTest self = new Antlr4SearchListenerTest();
-		boolean summary=true;
+		final private Antlr4SearchListenerTest parent;
+		final private String qs;
 		
-		summary &= self.verify_01(); // wildcard eq
-		summary &= self.verify_02(); // wildcard ne
-		summary &= self.verify_03(); // not a wildcard with * and ? in it
-		summary &= self.verify_04(); // grouping
-		summary &= self.verify_05(); // grouping gt and lt
-		summary &= self.verify_06(); // grouping ge and le
-		summary &= self.verify_07(); // not grouping ge and le
-		summary &= self.verify_08(); // nested grouping
-		summary &= self.verify_98(); // check exceptions
-		System.out.println("test is a " + (summary ? "success" : "FAILURE"));
+		NegativeTester (Antlr4SearchListenerTest parent, String qs)
+		{
+			this.parent = parent;
+			this.qs = qs;
+		}
+		public void execute() { this.parent.run (this.qs); } 
 	}
 
 	private BoolQueryBuilder run (String query)
@@ -54,219 +53,189 @@ public class Antlr4SearchListenerTest
         return listener.getBoolQuery();
 	}
 
-	private boolean verify_01()
+	@Test
+	public void testEqualWildcard()
 	{
-		boolean result = true;
 		String qs = "lid eq *pdart14_meap";
 		BoolQueryBuilder query = this.run(qs);
 		
-		result &= query.must().size() == 1;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof WildcardQueryBuilder;
-		result &= ((WildcardQueryBuilder)query.must().get(0)).fieldName().equals("lid");
-		result &= ((WildcardQueryBuilder)query.must().get(0)).value().equals("*pdart14_meap");
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
+		Assertions.assertEquals (query.must().size(), 1);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.must().get(0) instanceof WildcardQueryBuilder);
+		Assertions.assertEquals (((WildcardQueryBuilder)query.must().get(0)).fieldName(), "lid");
+		Assertions.assertEquals (((WildcardQueryBuilder)query.must().get(0)).value(), "*pdart14_meap");
 	}
 
-	private boolean verify_02()
+	@Test
+	public void testNotEqualWildchar()
 	{
-		boolean result = true;
 		String qs = "lid ne pdart14_meap?";
 		BoolQueryBuilder query = this.run(qs);
 		
-		result &= query.must().size() == 0;
-		result &= query.mustNot().size() == 1;
-		result &= query.should().size() == 0;
-		result &= query.mustNot().get(0) instanceof WildcardQueryBuilder;
-		result &= ((WildcardQueryBuilder)query.mustNot().get(0)).fieldName().equals("lid");
-		result &= ((WildcardQueryBuilder)query.mustNot().get(0)).value().equals("pdart14_meap?");
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
+		Assertions.assertEquals (query.must().size(), 0);
+		Assertions.assertEquals (query.mustNot().size(), 1);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.mustNot().get(0) instanceof WildcardQueryBuilder);
+		Assertions.assertEquals (((WildcardQueryBuilder)query.mustNot().get(0)).fieldName(), "lid");
+		Assertions.assertEquals (((WildcardQueryBuilder)query.mustNot().get(0)).value(), "pdart14_meap?");
 	}
 
-	private boolean verify_03()
+	@Test
+	public void testEscape()
 	{
-		boolean result = true;
 		String qs = "lid eq \"*pdart14_meap?\"";
 		BoolQueryBuilder query = this.run(qs);
 		
-		result &= query.must().size() == 1;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof MatchQueryBuilder;
-		result &= ((MatchQueryBuilder)query.must().get(0)).fieldName().equals("lid");
-		result &= ((MatchQueryBuilder)query.must().get(0)).value().equals("\"*pdart14_meap?\"");
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
+		Assertions.assertEquals (query.must().size(), 1);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.must().get(0) instanceof MatchQueryBuilder);
+		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).fieldName(), "lid");
+		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).value(), "\"*pdart14_meap?\"");
 	}
 
-	private boolean verify_04()
+	@Test
+	public void testGroup()
 	{
-		boolean result = true;
 		String qs = "( lid eq *pdart14_meap* )";
 		BoolQueryBuilder query = this.run(qs);
 		
-		result &= query.must().size() == 1;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof WildcardQueryBuilder;
-		result &= ((WildcardQueryBuilder)query.must().get(0)).fieldName().equals("lid");
-		result &= ((WildcardQueryBuilder)query.must().get(0)).value().equals("*pdart14_meap*");
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
+		Assertions.assertEquals (query.must().size(), 1);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.must().get(0) instanceof WildcardQueryBuilder);
+		Assertions.assertEquals (((WildcardQueryBuilder)query.must().get(0)).fieldName(), "lid");
+		Assertions.assertEquals (((WildcardQueryBuilder)query.must().get(0)).value(), "*pdart14_meap*");
+
 	}
 
-	private boolean verify_05()
+	@Test
+	public void testGroupedStatementAndExclusiveInequality()
 	{
-		boolean result = true;
 		String qs = "( timestamp gt 12 and timestamp lt 27 )";
 		BoolQueryBuilder query = this.run(qs);
 
-		result &= query.must().size() == 2;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof RangeQueryBuilder;
-		result &= query.must().get(1) instanceof RangeQueryBuilder;
-		result &= ((RangeQueryBuilder)query.must().get(0)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)query.must().get(0)).from().equals("12");
-		result &= ((RangeQueryBuilder)query.must().get(0)).to() == null;
-		result &= !((RangeQueryBuilder)query.must().get(0)).includeLower();
-		result &= ((RangeQueryBuilder)query.must().get(0)).includeUpper();
-		result &= ((RangeQueryBuilder)query.must().get(1)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)query.must().get(1)).from() == null;
-		result &= ((RangeQueryBuilder)query.must().get(1)).to().equals("27");
-		result &= ((RangeQueryBuilder)query.must().get(1)).includeLower();
-		result &= !((RangeQueryBuilder)query.must().get(1)).includeUpper();
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
+		Assertions.assertEquals (query.must().size(), 2);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.must().get(0) instanceof RangeQueryBuilder);
+		Assertions.assertTrue (query.must().get(1) instanceof RangeQueryBuilder);
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(0)).fieldName(), "timestamp");
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(0)).from(), "12");
+		Assertions.assertNull (((RangeQueryBuilder)query.must().get(0)).to());
+		Assertions.assertFalse (((RangeQueryBuilder)query.must().get(0)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(0)).includeUpper());
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(1)).fieldName(), "timestamp");
+		Assertions.assertNull (((RangeQueryBuilder)query.must().get(1)).from());
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(1)).to(), "27");
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(1)).includeLower());
+		Assertions.assertFalse (((RangeQueryBuilder)query.must().get(1)).includeUpper());
 	}
 
-	private boolean verify_06()
+	@Test
+	public void testGroupedStatementAndInclusiveInequality()
 	{
 		boolean result = true;
-		String qs = "( timestamp ge 12 and timestamp le 27 )";
+		String qs = "( timestamp_A ge 12 and timestamp_B le 27 )";
 		BoolQueryBuilder query = this.run(qs);
 
-		result &= query.must().size() == 2;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof RangeQueryBuilder;
-		result &= query.must().get(1) instanceof RangeQueryBuilder;
-		result &= ((RangeQueryBuilder)query.must().get(0)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)query.must().get(0)).from().equals("12");
-		result &= ((RangeQueryBuilder)query.must().get(0)).to() == null;
-		result &= ((RangeQueryBuilder)query.must().get(0)).includeLower();
-		result &= ((RangeQueryBuilder)query.must().get(0)).includeUpper();
-		result &= ((RangeQueryBuilder)query.must().get(1)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)query.must().get(1)).from() == null;
-		result &= ((RangeQueryBuilder)query.must().get(1)).to().equals("27");
-		result &= ((RangeQueryBuilder)query.must().get(1)).includeLower();
-		result &= ((RangeQueryBuilder)query.must().get(1)).includeUpper();
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
+		Assertions.assertEquals (query.must().size(), 2);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.must().get(0) instanceof RangeQueryBuilder);
+		Assertions.assertTrue (query.must().get(1) instanceof RangeQueryBuilder);
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(0)).fieldName(), "timestamp_A");
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(0)).from(), "12");
+		Assertions.assertNull (((RangeQueryBuilder)query.must().get(0)).to());
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(0)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(0)).includeUpper());
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(1)).fieldName(), "timestamp_B");
+		Assertions.assertNull (((RangeQueryBuilder)query.must().get(1)).from());
+		Assertions.assertEquals (((RangeQueryBuilder)query.must().get(1)).to(), "27");
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(1)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)query.must().get(1)).includeUpper());
 	}
 
-	private boolean verify_07()
+	@Test
+	public void testNot()
 	{
-		boolean result = true;
 		String qs = "not ( timestamp ge 12 and timestamp le 27 )";
 		BoolQueryBuilder query = this.run(qs);
 
-		result &= query.must().size() == 2;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 0;
-		result &= query.must().get(0) instanceof RangeQueryBuilder;
-		result &= query.must().get(1) instanceof RangeQueryBuilder;
-		result &= ((RangeQueryBuilder)query.must().get(0)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)query.must().get(0)).from().equals("12");
-		result &= ((RangeQueryBuilder)query.must().get(0)).to() == null;
-		result &= ((RangeQueryBuilder)query.must().get(0)).includeLower();
-		result &= ((RangeQueryBuilder)query.must().get(0)).includeUpper();
-		result &= ((RangeQueryBuilder)query.must().get(1)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)query.must().get(1)).from() == null;
-		result &= ((RangeQueryBuilder)query.must().get(1)).to().equals("27");
-		result &= ((RangeQueryBuilder)query.must().get(1)).includeLower();
-		result &= ((RangeQueryBuilder)query.must().get(1)).includeUpper();
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
+		Assertions.assertEquals (query.must().size(), 0);
+		Assertions.assertEquals (query.mustNot().size(), 2);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.mustNot().get(0) instanceof RangeQueryBuilder);
+		Assertions.assertTrue (query.mustNot().get(1) instanceof RangeQueryBuilder);
+		Assertions.assertEquals (((RangeQueryBuilder)query.mustNot().get(0)).fieldName(), "timestamp");
+		Assertions.assertEquals (((RangeQueryBuilder)query.mustNot().get(0)).from(), "12");
+		Assertions.assertNull (((RangeQueryBuilder)query.mustNot().get(0)).to());
+		Assertions.assertTrue (((RangeQueryBuilder)query.mustNot().get(0)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)query.mustNot().get(0)).includeUpper());
+		Assertions.assertEquals (((RangeQueryBuilder)query.mustNot().get(1)).fieldName(), "timestamp");
+		Assertions.assertNull (((RangeQueryBuilder)query.mustNot().get(1)).from());
+		Assertions.assertEquals (((RangeQueryBuilder)query.mustNot().get(1)).to(), "27");
+		Assertions.assertTrue (((RangeQueryBuilder)query.mustNot().get(1)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)query.mustNot().get(1)).includeUpper());
 	}
 
-	private boolean verify_08()
+	@Test
+	public void testNestedGrouping()
 	{
-		boolean result = true;
-		String qs = "( ( timestamp ge 12 and timestamp le 27 ) or ( timestamp gt 12 and timestamp lt 27 ) )";
+		String qs = "( ( timestamp ge 12 and timestamp le 27 ) or ( timestamp gt 13 and timestamp lt 37 ) )";
 		BoolQueryBuilder nest, query = this.run(qs);
 
-		result &= query.must().size() == 0;
-		result &= query.mustNot().size() == 0;
-		result &= query.should().size() == 2;
-		result &= query.should().get(0) instanceof BoolQueryBuilder;
+		Assertions.assertEquals (query.must().size(), 0);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 2);
+		Assertions.assertTrue (query.should().get(0) instanceof BoolQueryBuilder);
 		nest = (BoolQueryBuilder)query.should().get(0);
-		result &= nest.must().size() == 2;
-		result &= nest.mustNot().size() == 0;
-		result &= nest.should().size() == 0;
-		result &= nest.must().get(0) instanceof RangeQueryBuilder;
-		result &= nest.must().get(1) instanceof RangeQueryBuilder;
-		result &= ((RangeQueryBuilder)nest.must().get(0)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)nest.must().get(0)).from().equals("12");
-		result &= ((RangeQueryBuilder)nest.must().get(0)).to() == null;
-		result &= ((RangeQueryBuilder)nest.must().get(0)).includeLower();
-		result &= ((RangeQueryBuilder)nest.must().get(0)).includeUpper();
-		result &= ((RangeQueryBuilder)nest.must().get(1)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)nest.must().get(1)).from() == null;
-		result &= ((RangeQueryBuilder)nest.must().get(1)).to().equals("27");
-		result &= ((RangeQueryBuilder)nest.must().get(1)).includeLower();
-		result &= ((RangeQueryBuilder)nest.must().get(1)).includeUpper();
+		Assertions.assertEquals (nest.must().size(), 2);
+		Assertions.assertEquals (nest.mustNot().size(), 0);
+		Assertions.assertEquals (nest.should().size(), 0);
+		Assertions.assertTrue (nest.must().get(0) instanceof RangeQueryBuilder);
+		Assertions.assertTrue (nest.must().get(1) instanceof RangeQueryBuilder);
+		Assertions.assertEquals (((RangeQueryBuilder)nest.must().get(0)).fieldName(), "timestamp");
+		Assertions.assertEquals (((RangeQueryBuilder)nest.must().get(0)).from(), "12");
+		Assertions.assertNull (((RangeQueryBuilder)nest.must().get(0)).to());
+		Assertions.assertTrue (((RangeQueryBuilder)nest.must().get(0)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)nest.must().get(0)).includeUpper());
+		Assertions.assertEquals (((RangeQueryBuilder)nest.must().get(1)).fieldName(), "timestamp");
+		Assertions.assertNull (((RangeQueryBuilder)nest.must().get(1)).from());
+		Assertions.assertEquals (((RangeQueryBuilder)nest.must().get(1)).to(), "27");
+		Assertions.assertTrue (((RangeQueryBuilder)nest.must().get(1)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)nest.must().get(1)).includeUpper());
 		nest = (BoolQueryBuilder)query.should().get(1);
-		result &= nest.must().size() == 2;
-		result &= nest.mustNot().size() == 0;
-		result &= nest.should().size() == 0;
-		result &= nest.must().get(0) instanceof RangeQueryBuilder;
-		result &= nest.must().get(1) instanceof RangeQueryBuilder;
-		result &= ((RangeQueryBuilder)nest.must().get(0)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)nest.must().get(0)).from().equals("12");
-		result &= ((RangeQueryBuilder)nest.must().get(0)).to() == null;
-		result &= !((RangeQueryBuilder)nest.must().get(0)).includeLower();
-		result &= ((RangeQueryBuilder)nest.must().get(0)).includeUpper();
-		result &= ((RangeQueryBuilder)nest.must().get(1)).fieldName().equals("timestamp");
-		result &= ((RangeQueryBuilder)nest.must().get(1)).from() == null;
-		result &= ((RangeQueryBuilder)nest.must().get(1)).to().equals("27");
-		result &= ((RangeQueryBuilder)nest.must().get(1)).includeLower();
-		result &= !((RangeQueryBuilder)nest.must().get(1)).includeUpper();
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
+		Assertions.assertEquals (nest.must().size(), 2);
+		Assertions.assertEquals (nest.mustNot().size(), 0);
+		Assertions.assertEquals (nest.should().size(), 0);
+		Assertions.assertTrue (nest.must().get(0) instanceof RangeQueryBuilder);
+		Assertions.assertTrue (nest.must().get(1) instanceof RangeQueryBuilder);
+		Assertions.assertEquals (((RangeQueryBuilder)nest.must().get(0)).fieldName(), "timestamp");
+		Assertions.assertEquals (((RangeQueryBuilder)nest.must().get(0)).from(), "13");
+		Assertions.assertNull (((RangeQueryBuilder)nest.must().get(0)).to());
+		Assertions.assertFalse (((RangeQueryBuilder)nest.must().get(0)).includeLower());
+		Assertions.assertTrue (((RangeQueryBuilder)nest.must().get(0)).includeUpper());
+		Assertions.assertEquals (((RangeQueryBuilder)nest.must().get(1)).fieldName(), "timestamp");
+		Assertions.assertNull (((RangeQueryBuilder)nest.must().get(1)).from());
+		Assertions.assertEquals (((RangeQueryBuilder)nest.must().get(1)).to(), "37");
+		Assertions.assertTrue (((RangeQueryBuilder)nest.must().get(1)).includeLower());
+		Assertions.assertFalse (((RangeQueryBuilder)nest.must().get(1)).includeUpper());
 	}
 
-	private boolean verify_98()
+	@Test
+	public void testExceptionsInParsing()
 	{
-		boolean result = true, iresult;
+		NegativeTester actor;
 		String fails[] = {"( a eq b", "a eq b )", "not( a eq b )",
 				          "a eq b and c eq d and", "( a eq b and c eq d and )",
 				          "( a eq b and c eq d or e eq f )"};
 
 		for (int i = 0 ; i < fails.length ; i++)
 		{
-			try
-			{
-				BoolQueryBuilder query = this.run(fails[i]);
-				iresult = false;
-			}
-			catch (ParseCancellationException pce) { iresult = true; }
-			catch (RuntimeException re) { iresult = false; System.out.println("wrong excpetion"); }
-			System.out.println((iresult ? "success" : "FAILURE") + " - "  + fails[i]);
-			result &= iresult;
+			actor = new NegativeTester(this, fails[i]);
+			Assertions.assertThrows(ParseCancellationException.class, actor);
 		}
-		return result;
-	}
-
-	private boolean verify_99()
-	{
-		boolean result = true;
-		String qs = "";
-		BoolQueryBuilder query = this.run(qs);
-		System.out.println((result ? "success" : "FAILURE") + " - "  + qs);
-		return result;
 	}
 }
