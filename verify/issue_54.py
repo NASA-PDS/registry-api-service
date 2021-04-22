@@ -7,9 +7,9 @@
 import requests
 
 TEST_N_CRITERIA=[
-    ('http://localhost:8080/products?q=lid%20eq%20*pdart14_me*',200,
+    ('http://localhost:8080/products?q=lid eq *pdart14_me*',200,
      17,'id', 'pdart14_me'),
-    ('http://localhost:8080/products?q=(%20lid%20eq%20*pdart14_me*%20and%20lid%20eq%20*_orbit_*%20)',200,
+    ('http://localhost:8080/products?q=( lid eq *pdart14_me* and lid eq *_orbit_* )',200,
      3,'id', '_orbit_'),
     ]
 
