@@ -86,9 +86,18 @@ public class Antlr4SearchListener extends SearchBaseListener
 		 this.query = this.stack_queries.pop();
 		 this.shoulds = this.stack_shoulds.pop();
 
-		 for (QueryBuilder qb : musts) group.must(qb);
-		 for (QueryBuilder qb : nots) group.mustNot(qb);
-		 for (QueryBuilder qb : shoulds) group.should(qb);
+		 if (this.depth == 0 && ctx.NOT() != null)
+		 {
+			 for (QueryBuilder qb : nots) group.must(qb);
+			 for (QueryBuilder qb : musts) group.mustNot(qb);
+			 for (QueryBuilder qb : shoulds) group.should(qb);
+		 }
+		 else
+		 {
+			 for (QueryBuilder qb : musts) group.must(qb);
+			 for (QueryBuilder qb : nots) group.mustNot(qb);
+			 for (QueryBuilder qb : shoulds) group.should(qb);
+		 }
 
 		 if (0 < depth)
 		 {
@@ -125,7 +134,11 @@ public class Antlr4SearchListener extends SearchBaseListener
 		if (ctx.NUMBER() != null) right = ctx.NUMBER().getSymbol().getText();
 		else if (ctx.STRINGVAL() != null) right = ctx.STRINGVAL().getSymbol().getText();
 		else if (ctx.VALUE() != null) right = ctx.VALUE().getSymbol().getText();
-		else throw new RuntimeException(); // PANIC: listener out of sync with the grammar
+		else
+		{
+			log.error("Panic, there are more data types than this version of the lexer knows about.");
+			throw new ParseCancellationException(); // PANIC: listener out of sync with the grammar
+		}
 
 		if (this.operator == operation.eq || this.operator == operation.ne)
 		{
@@ -140,7 +153,11 @@ public class Antlr4SearchListener extends SearchBaseListener
 			else if (this.operator == operation.gt) ((RangeQueryBuilder)comparator).gt(right);
 			else if (this.operator == operation.le) ((RangeQueryBuilder)comparator).lte(right);
 			else if (this.operator == operation.lt) ((RangeQueryBuilder)comparator).lt(right);
-			else throw new RuntimeException(); // PANIC: listener out of sync with the grammar
+			else
+			{
+				log.error("Panic, there are more range operators than this version of the lexer knows about");
+				throw new ParseCancellationException(); // PANIC: listener out of sync with the grammar
+			}
 		}
 
 		if (this.operator == operation.ne) this.nots.add(comparator);
@@ -151,7 +168,11 @@ public class Antlr4SearchListener extends SearchBaseListener
 	@Override
 	public void enterOperator(SearchParser.OperatorContext ctx)
 	{
-		if (this.wildcard && ctx.EQ() == null && ctx.NE() == null) throw new ParseCancellationException();
+		if (this.wildcard && ctx.EQ() == null && ctx.NE() == null)
+		{
+			log.warn("Cannot use wildcards with <, <=, >=, or >");
+			throw new ParseCancellationException();
+		}
 		
 		if (ctx.EQ() != null) this.operator = operation.eq;
 		else if (ctx.GE() != null) this.operator = operation.ge;
@@ -159,7 +180,11 @@ public class Antlr4SearchListener extends SearchBaseListener
 		else if (ctx.LE() != null) this.operator = operation.le;
 		else if (ctx.LT() != null) this.operator = operation.lt;
 		else if (ctx.NE() != null) this.operator = operation.ne;
-		else throw new RuntimeException(); // PANIC: listener out of sync with the grammar
+		else
+		{
+			log.error("Panic, there are more operators than this versionof the lexer knows about");
+			throw new ParseCancellationException(); // PANIC: listener out of sync with the grammar
+		}
 	}
 	 
 	 
