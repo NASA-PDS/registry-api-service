@@ -27,12 +27,13 @@ COPY src /usr/local/registry-api-service-${VERSION}/src
 EXPOSE 8080
 
 # Build then generate/store the self signed cert.
-RUN cd /usr/local/registry-api-service-${VERSION} \
+RUN set -ex \
+  && cd /usr/local/registry-api-service-${VERSION} \
   && mvn clean \
   && mvn install \
-  && cd target/classes \
+  && cd /usr/local/registry-api-service-${VERSION}/target/classes \
   && keytool -genkeypair -keyalg RSA -alias registry -keystore keystore.p12 -storepass MyDogHasFleas -keypass MyDogHasFleas \
-             -dname "CN=localhost" -keysize 2048 -validity 3650 -noprompt 
+             -dname "CN=Unknown" -keysize 2048 -validity 3650 -noprompt 
 
 # Run the sevice by default
 WORKDIR /usr/local/registry-api-service-${VERSION}
