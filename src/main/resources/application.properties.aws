@@ -11,15 +11,15 @@ server.port=443
 ## TODO: Figure out how best to handle certificate creation and related passwords, this is just for testing
 server.ssl.enabled=true
 server.ssl.key-alias=registry
-server.ssl.key-store-password=MyDogHasFleas
+server.ssl.key-store-password=
 server.ssl.key-store=classpath:keystore.p12
 server.ssl.key-store-type=PKCS12
 
 ## note the port is mandatory even when it is default :80 or :443
-elasticSearch.host=search-pds-dev-esext-kcq7xxa4lsrakjw33lywpjdyfy.us-west-2.es.amazonaws.com:443
+elasticSearch.host=
 elasticSearch.registryIndex=registry
 elasticSearch.registryRefIndex=registry-refs
 elasticSearch.timeOutSeconds=60
-elasticSearch.username=pds-en-registry
-elasticSearch.password=1gr"grc3PX8}
+elasticSearch.username=
+elasticSearch.password=
 elasticSearch.ssl=true
