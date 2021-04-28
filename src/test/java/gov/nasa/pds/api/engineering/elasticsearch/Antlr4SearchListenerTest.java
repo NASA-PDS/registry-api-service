@@ -92,7 +92,7 @@ public class Antlr4SearchListenerTest
 		Assertions.assertEquals (query.should().size(), 0);
 		Assertions.assertTrue (query.must().get(0) instanceof MatchQueryBuilder);
 		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).fieldName(), "lid");
-		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).value(), "\"*pdart14_meap?\"");
+		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).value(), "*pdart14_meap?");
 	}
 
 	@Test
@@ -229,6 +229,34 @@ public class Antlr4SearchListenerTest
 		Assertions.assertFalse (((RangeQueryBuilder)nest.must().get(1)).includeUpper());
 	}
 
+	@Test
+	public void testNoWildcard()
+	{
+		String qs = "ref_lid_target eq urn:nasa:pds:context:target:planet.mercury";
+		BoolQueryBuilder nest, query = this.run(qs);
+
+		Assertions.assertEquals (query.must().size(), 1);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.must().get(0) instanceof MatchQueryBuilder);
+		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).fieldName(), "ref_lid_target");
+		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).value(), "urn:nasa:pds:context:target:planet.mercury");
+	}
+	
+	@Test
+	public void testNoWildcardQuoted()
+	{
+		String qs = "ref_lid_target eq \"urn:nasa:pds:context:target:planet.mercury\"";
+		BoolQueryBuilder nest, query = this.run(qs);
+
+		Assertions.assertEquals (query.must().size(), 1);
+		Assertions.assertEquals (query.mustNot().size(), 0);
+		Assertions.assertEquals (query.should().size(), 0);
+		Assertions.assertTrue (query.must().get(0) instanceof MatchQueryBuilder);
+		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).fieldName(), "ref_lid_target");
+		Assertions.assertEquals (((MatchQueryBuilder)query.must().get(0)).value(), "urn:nasa:pds:context:target:planet.mercury");
+	}
+	
 	@Test
 	public void testExceptionsInParsing()
 	{

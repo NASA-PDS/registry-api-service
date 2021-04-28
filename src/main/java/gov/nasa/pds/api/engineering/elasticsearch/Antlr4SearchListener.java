@@ -124,11 +124,16 @@ public class Antlr4SearchListener extends SearchBaseListener
 	@Override
 	public void exitComparison(SearchParser.ComparisonContext ctx)
 	{
-		String left = ctx.FIELD().getSymbol().getText(), right;
+		String left = ctx.FIELD(0).getSymbol().getText(), right;
 		QueryBuilder comparator = null;
 
-		if (ctx.NUMBER() != null) right = ctx.NUMBER().getSymbol().getText();
-		else if (ctx.STRINGVAL() != null) right = ctx.STRINGVAL().getSymbol().getText();
+		if (ctx.FIELD(1) != null) right = ctx.FIELD(1).getSymbol().getText();
+		else if (ctx.NUMBER() != null) right = ctx.NUMBER().getSymbol().getText();
+		else if (ctx.STRINGVAL() != null)
+		{
+			right = ctx.STRINGVAL().getSymbol().getText();
+			right = right.substring(1, right.length()-1);
+		}
 		else if (ctx.VALUE() != null) right = ctx.VALUE().getSymbol().getText();
 		else
 		{
