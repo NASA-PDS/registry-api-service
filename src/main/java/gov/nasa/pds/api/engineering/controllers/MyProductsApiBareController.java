@@ -213,7 +213,7 @@ public class MyProductsApiBareController {
           }
         	catch (ParseCancellationException pce) {
         		log.error("Could not parse the query string: " + q);
-        		return new ResponseEntity<Products>(HttpStatus.UNPROCESSABLE_ENTITY);
+        		return new ResponseEntity<Products>(HttpStatus.BAD_REQUEST);
         	}            
         }
         else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
