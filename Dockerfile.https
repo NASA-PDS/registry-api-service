@@ -24,7 +24,7 @@ COPY pom.xml /usr/local/registry-api-service-${VERSION}
 COPY src /usr/local/registry-api-service-${VERSION}/src
 
 # Resources shared with the rest of the world
-EXPOSE 8080
+EXPOSE 443
 
 # Build then generate/store the self signed cert.
 RUN set -ex \
