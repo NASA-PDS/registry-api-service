@@ -124,7 +124,8 @@ public class Antlr4SearchListener extends SearchBaseListener
 	@Override
 	public void exitComparison(SearchParser.ComparisonContext ctx)
 	{
-		String left = ctx.FIELD(0).getSymbol().getText(), right;
+		final String left = ElasticSearchUtil.jsonPropertyToElasticProperty (ctx.FIELD(0).getSymbol().getText());
+		String right;
 		QueryBuilder comparator = null;
 
 		if (ctx.FIELD(1) != null) right = ctx.FIELD(1).getSymbol().getText();
