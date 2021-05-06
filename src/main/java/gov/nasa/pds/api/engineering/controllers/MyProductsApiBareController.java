@@ -37,6 +37,7 @@ import gov.nasa.pds.api.model.ProductWithXmlLabel;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
+import gov.nasa.pds.model.ErrorMessage;
 
 public class MyProductsApiBareController {
 	
@@ -189,7 +190,7 @@ public class MyProductsApiBareController {
 
     
     
-    protected ResponseEntity<Products> getProductsResponseEntity(String q, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) {
+    protected ResponseEntity<Object> getProductsResponseEntity(String q, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) {
         String accept = this.request.getHeader("Accept");
         log.info("accept value is " + accept);
         if ((accept != null 
@@ -205,20 +206,25 @@ public class MyProductsApiBareController {
         	
         		Products products = this.getProducts(q, start, limit, fields, sort, onlySummary);
 	        	
-	        	return new ResponseEntity<Products>(products, HttpStatus.OK);
+	        	return new ResponseEntity<Object>(products, HttpStatus.OK);
 	        	
     	  } catch (IOException e) {
               log.error("Couldn't serialize response for content type " + accept, e);
-              return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
+              return new ResponseEntity<Object>(HttpStatus.INTERNAL_SERVER_ERROR);
           }
         	catch (ParseCancellationException pce) {
         		log.error("Could not parse the query string: " + q);
-        		return ResponseEntity
-        				.status(HttpStatus.BAD_REQUEST)
-        				.body("Could not parse the query string: " + q)
+        		ErrorMessage error = new ErrorMessage();
+        		String contextPath = this.request.getContextPath();
+        		error.setUrl(this.request.getRequestURL().toString());
+        		error.setResource("Products");
+        		error.setQuery(this.request.getQueryString());
+        		error.setMessage("unable to parse q parameter " + pce.getMessage());
+        		return new ResponseEntity<Object>(error, HttpStatus.BAD_REQUEST);
+
         	}            
         }
-        else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
+        else return new ResponseEntity<Object>(HttpStatus.NOT_IMPLEMENTED);
     }
     
     

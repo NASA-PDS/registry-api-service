@@ -185,7 +185,7 @@ public class Antlr4SearchListener extends SearchBaseListener
 		else
 		{
 			log.error("Panic, there are more operators than this versionof the lexer knows about");
-			throw new ParseCancellationException(); // PANIC: listener out of sync with the grammar
+			throw new ParseCancellationException("Unknown operator " + this.operator); // PANIC: listener out of sync with the grammar
 		}
 	}
 	 
