@@ -128,6 +128,7 @@ public class Antlr4SearchListener extends SearchBaseListener
 		String right;
 		QueryBuilder comparator = null;
 
+		// the second term of the comparison can be first tokenized as FIELD (string without quote) since FIELD is before VALUE (string with optional wildcard, no quote) in the ANTLR4 grammar.
 		if (ctx.FIELD(1) != null) right = ctx.FIELD(1).getSymbol().getText();
 		else if (ctx.NUMBER() != null) right = ctx.NUMBER().getSymbol().getText();
 		else if (ctx.STRINGVAL() != null)
