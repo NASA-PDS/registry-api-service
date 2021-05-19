@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -202,7 +203,8 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	products.setSummary(summary);
     	for (int i = start ; start < limit && i < hits.getHits().length ; i++)
     	{
-	        Map<String, Object> sourceAsMap = hits.getAt(i).getSourceAsMap();
+    		GetRequest request = new GetRequest(this.esRegistryConnection.getRegistryIndex(), (String)hits.getAt(i).getSourceAsMap().get("collection_lidvid"));
+	        Map<String, Object> sourceAsMap = this.esRegistryConnection.getRestHighLevelClient().get(request, RequestOptions.DEFAULT).getSourceAsMap();
 	        Map<String, Object> filteredMapJsonProperties = this.getFilteredProperties(sourceAsMap, fields);
 	        
 	        uniqueProperties.addAll(filteredMapJsonProperties.keySet());
