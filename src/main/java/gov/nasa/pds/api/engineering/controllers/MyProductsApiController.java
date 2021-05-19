@@ -110,7 +110,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	SearchRequest request = new SearchRequest(this.esRegistryConnection.getRegistryIndex());
     	SearchResponse response;
     	SearchSourceBuilder builder = new SearchSourceBuilder();
-      	Summary summary = new Summary();
+    	Summary summary = new Summary();
 
     	if (sort == null) { sort = Arrays.asList(); }
 
