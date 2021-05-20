@@ -104,6 +104,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException
 	{
 		if (!lidvid.contains("::") && !lidvid.endsWith(":")) lidvid = this.getLatestLidVidFromLid(lidvid);
+		boolean haveMatches = false;
     	MyProductsApiController.log.info("find all bundles containing the collection lidvid: " + lidvid);
     	HashSet<String> uniqueProperties = new HashSet<String>();
     	Products products = new Products();
@@ -121,24 +122,30 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	products.setSummary(summary);
     	for (SearchHit hit : this.getCollections(lidvid))
     	{
+    		haveMatches = true;
     		query.should (QueryBuilders.matchQuery("ref_lid_collection", hit.getSourceAsMap().get("collection_lid")));
     	}
-    	builder.query(query);
-    	request.source(builder);
-    	response = this.esRegistryConnection.getRestHighLevelClient().search(request,RequestOptions.DEFAULT);
-    	for (int i = start ; start < limit && i < response.getHits().getHits().length ; i++)
+    	
+    	if (haveMatches)
     	{
-	        Map<String, Object> sourceAsMap = response.getHits().getAt(i).getSourceAsMap();
-	        Map<String, Object> filteredMapJsonProperties = this.getFilteredProperties(sourceAsMap, fields);
-	        
-	        uniqueProperties.addAll(filteredMapJsonProperties.keySet());
+    		builder.query(query);
+    		request.source(builder);
+    		response = this.esRegistryConnection.getRestHighLevelClient().search(request,RequestOptions.DEFAULT);
+    		for (int i = start ; start < limit && i < response.getHits().getHits().length ; i++)
+    		{
+    			Map<String, Object> sourceAsMap = response.getHits().getAt(i).getSourceAsMap();
+    			Map<String, Object> filteredMapJsonProperties = this.getFilteredProperties(sourceAsMap, fields);
 
-	        if (!summaryOnly) {
-    	        EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
-    	        ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
-    	        product.setProperties(filteredMapJsonProperties);
-    	        products.addDataItem(product);
-	        }
+    			uniqueProperties.addAll(filteredMapJsonProperties.keySet());
+
+    			if (!summaryOnly)
+    			{
+    				EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
+    				ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
+    				product.setProperties(filteredMapJsonProperties);
+    				products.addDataItem(product);
+    			}
+    		}
     	}
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
     	return products;
@@ -182,6 +189,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	builder.query(QueryBuilders.matchQuery("product_lidvid", lidvid));
     	request.source(builder);
     	response = this.esRegistryConnection.getRestHighLevelClient().search(request,RequestOptions.DEFAULT);
+    	log.info("number of hits: " + Integer.toString(response.getHits().getHits().length));
     	return response.getHits();
 	}
 
