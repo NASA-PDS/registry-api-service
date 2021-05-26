@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 
+import gov.nasa.pds.api.engineering.elasticsearch.business.LidVidNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,6 +79,9 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     		,@ApiParam(value = "sort results, syntax asc(field0),desc(field1)") @Valid @RequestParam(value = "sort", required = false) List<String> sort
     		,@ApiParam(value = "only return the summary, useful to get the list of available properties", defaultValue = "false") @Valid @RequestParam(value = "only-summary", required = false, defaultValue="false") Boolean onlySummary
     		) {
+    	
+    	 MyCollectionsApiController.log.info("Get productsOfACollection");
+    	
     	 String accept = this.request.getHeader("Accept");
     	 MyCollectionsApiController.log.info("accept value is " + accept);
 		 if ((accept != null 
@@ -100,7 +104,10 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 		 		*/
 		 		
 		 		return new ResponseEntity<Products>(products, HttpStatus.OK);
-		    	
+		  } catch (LidVidNotFoundException e) {
+			  log.error("Couldn't find the lidvid " + e.getMessage());
+			  return new ResponseEntity<Products>(HttpStatus.NOT_FOUND);
+			  
 		  } catch (IOException e) {
 		       log.error("Couldn't serialize response for content type " + accept, e);
 		       return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -112,7 +119,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     		
 	
     
-    private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException {
+    private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException {
 		if (!lidvid.contains("::") && !lidvid.endsWith(":")) lidvid = this.getLatestLidVidFromLid(lidvid);
     	MyCollectionsApiController.log.info("request bundle lidvid, collections children: " + lidvid);
          
