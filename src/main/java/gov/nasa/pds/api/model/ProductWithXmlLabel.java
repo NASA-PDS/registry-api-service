@@ -3,6 +3,7 @@ package gov.nasa.pds.api.model;
 import java.util.Map;
 
 import javax.validation.Valid;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import gov.nasa.pds.model.Product;
 import io.swagger.annotations.ApiModelProperty;
 
+@XmlRootElement
 public class ProductWithXmlLabel extends Product {
 	
 	 @JsonIgnore
@@ -23,7 +25,7 @@ public class ProductWithXmlLabel extends Product {
 	 @JsonInclude(JsonInclude.Include.ALWAYS)
 	 private Map<String, Object> properties = null;
 	
-	 public Product labelXml(String labelXml) {
+	 public ProductWithXmlLabel labelXml(String labelXml) {
 		    this.labelXml = labelXml;
 		    return this;
 	 }

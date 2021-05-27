@@ -35,6 +35,7 @@ import gov.nasa.pds.model.Products;
 import gov.nasa.pds.api.engineering.serializer.Pds4JsonProductSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4XmlProductSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4XmlProductsSerializer;
+import gov.nasa.pds.api.engineering.serializer.XmlProductSerializer;
 
 @Configuration
 @EnableWebMvc
@@ -77,9 +78,8 @@ public class WebMVCConfig implements WebMvcConfigurer {
    
 	  WebMVCConfig.log.info("Number of converters available " + Integer.toString(converters.size()));
 	  converters.add(new Pds4JsonProductSerializer());
-	  converters.add(new Jaxb2RootElementHttpMessageConverter());
 	  converters.add(new Pds4XmlProductSerializer());
-	  converters.add(new Pds4XmlProductsSerializer());
+	  converters.add(new XmlProductSerializer());
 	  
   }
   

@@ -3,6 +3,7 @@ package gov.nasa.pds.api.engineering.elasticsearch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -101,9 +102,9 @@ public class ElasticSearchUtil {
 			meta.setCreationDateTime(ep.getCreationDate());
 		}
 		
-		String updateDateTime = ep.getModificationDate().get(0);
+		List<String> updateDateTime = ep.getModificationDate();
 		if (updateDateTime != null) {
-			meta.setUpdateDateTime(updateDateTime);
+			meta.setUpdateDateTime(updateDateTime.get(0)); // TODO check which modification time to use when there are more than one
 		}
 		
 		
