@@ -135,7 +135,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 	    	     	        
 	    	     	        if (!onlySummary) {
 	    	     	        	EntityProduct entityCollection = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
-	    	     	        	ProductWithXmlLabel collection = ElasticSearchUtil.ESentityProductToAPIProduct(entityCollection);
+	    	     	        	Product collection = ElasticSearchUtil.ESentityProductToAPIProduct(entityCollection);
 	    	     	        	collection.setProperties(filteredMapJsonProperties);
 	    	         	        products.addDataItem(collection);
 	    	     	        }
@@ -172,7 +172,6 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 		 		&& (accept.contains("application/json") 
 		 				|| accept.contains("text/html")
 		 				|| accept.contains("application/xml")
-		 				|| accept.contains("application/pds4+xml")
 		 				|| accept.contains("*/*")))
 		 	|| (accept == null)) {
 		 	
@@ -201,7 +200,6 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 		 		&& (accept.contains("application/json") 
 		 				|| accept.contains("text/html")
 		 				|| accept.contains("application/xml")
-		 				|| accept.contains("application/pds4+xml")
 		 				|| accept.contains("*/*")))
 		 	|| (accept == null)) {
 		 	
@@ -287,7 +285,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
         				if (!onlySummary)
         				{
         					EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
-        					ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
+        					Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
         					product.setProperties(filteredMapJsonProperties);
         					products.addDataItem(product);
         				}

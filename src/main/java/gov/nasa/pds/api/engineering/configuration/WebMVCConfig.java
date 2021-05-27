@@ -76,7 +76,8 @@ public class WebMVCConfig implements WebMvcConfigurer {
   public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
    
 	  WebMVCConfig.log.info("Number of converters available " + Integer.toString(converters.size()));
-	  converters.add(new Pds4JsonProductSerializer());	 
+	  converters.add(new Pds4JsonProductSerializer());
+	  converters.add(new Jaxb2RootElementHttpMessageConverter());
 	  converters.add(new Pds4XmlProductSerializer());
 	  converters.add(new Pds4XmlProductsSerializer());
 	  

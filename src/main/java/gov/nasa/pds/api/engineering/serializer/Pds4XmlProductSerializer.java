@@ -27,8 +27,7 @@ import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 public class Pds4XmlProductSerializer extends AbstractHttpMessageConverter<Product> {
 
 		  public Pds4XmlProductSerializer() {
-		      super(new MediaType("application", "xml"),
-		    		new MediaType("application", "pds4+xml"));
+		      super(new MediaType("application", "pds4+xml"));
 		  }
 
 		  @Override

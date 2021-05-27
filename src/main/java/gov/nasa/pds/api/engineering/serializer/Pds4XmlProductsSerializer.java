@@ -49,8 +49,7 @@ public class Pds4XmlProductsSerializer  extends AbstractHttpMessageConverter<Pro
 	  static final private String NAMESPACE_URL = "http://pds.nasa.gov/api";
 	
 	  public Pds4XmlProductsSerializer() {
-	      super(new MediaType("application", "xml"),
-	    		new MediaType("application", "pds4+xml"));
+	      super(new MediaType("application", "pds4+xml"));
 	  }
 
 	  @Override

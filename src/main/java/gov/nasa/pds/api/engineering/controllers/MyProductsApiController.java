@@ -141,7 +141,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     			if (!summaryOnly)
     			{
     				EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
-    				ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
+    				Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
     				product.setProperties(filteredMapJsonProperties);
     				products.addDataItem(product);
     			}
@@ -219,7 +219,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 
 	        if (!summaryOnly) {
     	        EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
-    	        ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
+    	        Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
     	        product.setProperties(filteredMapJsonProperties);
     	        products.addDataItem(product);
 	        }

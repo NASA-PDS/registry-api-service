@@ -18,7 +18,6 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +30,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnection;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
-import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityCollection;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
+import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;
 import gov.nasa.pds.api.model.ProductWithXmlLabel;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
@@ -134,7 +133,7 @@ public class MyProductsApiBareController {
 
     	        if (!onlySummary) {
         	        EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
-        	        ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
+        	        Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
         	        product.setProperties(filteredMapJsonProperties);
         	        products.addDataItem(product);
     	        }
@@ -196,7 +195,6 @@ public class MyProductsApiBareController {
         		&& (accept.contains("application/json") 
         				|| accept.contains("text/html")
         				|| accept.contains("application/xml")
-        				|| accept.contains("application/pds4+xml")
         				|| accept.contains("*/*")))
         	|| (accept == null)) {
         	
@@ -248,9 +246,9 @@ public class MyProductsApiBareController {
 	        	if (getResponse.isExists()) {
 	        		log.info("get response " + getResponse.toString());
 	        		Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-	        		EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
+	        		EntitytProductWithBlob entityProduct = objectMapper.convertValue(sourceAsMap, EntitytProductWithBlob.class);
 	        		
-	        		ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
+	        		ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductWithBlobToAPIProductWithXMLLabel(entityProduct);
 
 	        		Map<String, Object> sourceAsMapJsonProperties = ElasticSearchUtil.elasticHashMapToJsonHashMap(sourceAsMap);
 	        		product.setProperties(sourceAsMapJsonProperties);
