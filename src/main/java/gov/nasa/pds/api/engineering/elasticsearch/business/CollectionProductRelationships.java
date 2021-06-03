@@ -96,7 +96,9 @@ public class CollectionProductRelationships implements Iterable<EntityProduct> {
 		
 	}
 	
-	 // code for data structure 
+	
+	
+	// code for data structure 
     public Iterator<EntityProduct> iterator() { 
         return new CollectionProductIterator<EntityProduct>(this); 
     }

@@ -30,28 +30,7 @@ import org.xml.sax.SAXException;
 
 public class EntityProduct {
 	private static final Logger log = LoggerFactory.getLogger(EntityProduct.class);
-	
-
-	
-	
-	
-	public final String PROCEDURE_INSTRUMENT_TYPE = "Instrument";
-	public final String PROCEDURE_INSTRUMENT_HOST_TYPE = "Spacecraft";
-	
-	public final String PROCEDURE_INSTRUMENT_ROLE = "is_instrument"; 
-	public final String PROCEDURE_INSTRUMENT_HOST_ROLE = "is_instrument_host"; 
-	
-    public final List<String> PROCEDURE_REFERENCE_ROLES = new ArrayList<>(Arrays.asList(
-    	    this.PROCEDURE_INSTRUMENT_ROLE,
-    	    this.PROCEDURE_INSTRUMENT_HOST_ROLE
-    ));
-    
-    public final String TARGET_ROLE = "data_to_target";
-    public final List<String> TARGET_ROLES = new ArrayList<>(Arrays.asList(
-    	    this.TARGET_ROLE));
-    
-   
-    
+		   
 	@JsonProperty("lidvid")
 	private String lidvid;
 	

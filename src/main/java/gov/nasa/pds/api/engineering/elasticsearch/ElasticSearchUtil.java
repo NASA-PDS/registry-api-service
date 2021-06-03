@@ -40,34 +40,12 @@ public class ElasticSearchUtil {
 		reference.setHref(baseURL + "/products/" + reference.getId());
 		to.add(reference);
 	}
-
-	static public Map<String, Object> elasticHashMapToJsonHashMap(Map<String, Object> sourceAsMap){
-			 Map<String, Object> sourceAsMapJsonProperties = new HashMap<String, Object>();
-			 Iterator<Entry<String, Object>> iterator = sourceAsMap.entrySet().iterator();
-		     while (iterator.hasNext()) {
-		    	 try {
-	  	    	 Map.Entry<String, Object> entry = (Map.Entry<String, Object>) iterator.next();
-	  	    	 sourceAsMapJsonProperties.put(elasticPropertyToJsonProperty(entry.getKey()),
-	                       entry.getValue());
-		    	 } catch (UnsupportedElasticSearchProperty e) {
-		    		 ElasticSearchUtil.log.warn(e.getMessage());
-		    	 }
-		     }
-		     
-		     return sourceAsMapJsonProperties;
-	   }
-
-
-	static public ProductWithXmlLabel ESentityProductWithBlobToAPIProductWithXMLLabel(EntitytProductWithBlob ep) {
-		ProductWithXmlLabel product = (ProductWithXmlLabel)ElasticSearchUtil.ESentityProductToAPIProduct(ep);
-		
-		product.setLabelXml(ep.getPDS4XML()); // value is injected to be used as-is in XML serialization
-		
-		return product;
-	}
-
-	static public Product ESentityProductToAPIProduct(EntityProduct ep) {
-		ProductWithXmlLabel product = new ProductWithXmlLabel();
+	
+	
+	static private Product addPropertiesFromESEntity(
+			Product product, 
+			EntityProduct ep
+			) {
 		product.setId(ep.getLidVid());
 		product.setType(ep.getProductClass());
 		
@@ -125,7 +103,28 @@ public class ElasticSearchUtil {
 		
 		return product;
 	
+
+	}
+	
+	static public ProductWithXmlLabel ESentityProductToAPIProduct(EntitytProductWithBlob ep) {
+		ElasticSearchUtil.log.info("convert ES object to API object with XML label");
+		ProductWithXmlLabel product = new ProductWithXmlLabel();
+		product.setLabelXml(ep.getPDS4XML());
+		return (ProductWithXmlLabel)addPropertiesFromESEntity(product, ep);
 		
+	}
+	
+
+	static public Product ESentityProductToAPIProduct(EntityProduct ep) {
+		
+	
+		ElasticSearchUtil.log.info("convert ES object to API object without XML label");
+		
+		Product product = new Product();
+		
+		return addPropertiesFromESEntity(product, ep);
+		
+				
 	}
 
 }

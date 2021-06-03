@@ -6,8 +6,11 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.api.engineering.elasticsearch.business.CollectionProductRefBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.business.CollectionProductRelationships;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
+import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;
+import gov.nasa.pds.api.engineering.exceptions.UnsupportedElasticSearchProperty;
 import gov.nasa.pds.api.model.ProductWithXmlLabel;
 import gov.nasa.pds.model.Product;
+import gov.nasa.pds.model.PropertyValues;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
 
@@ -31,6 +34,8 @@ import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 
 import gov.nasa.pds.api.engineering.elasticsearch.business.LidVidNotFoundException;
+import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,8 +125,9 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 	
     
     private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException {
-		if (!lidvid.contains("::") && !lidvid.endsWith(":")) lidvid = this.getLatestLidVidFromLid(lidvid);
-    	MyCollectionsApiController.log.info("request bundle lidvid, collections children: " + lidvid);
+  	
+    	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
+    	MyCollectionsApiController.log.info("request collection lidvid, collections children: " + lidvid);
          
     	try {
 	    	Products products = new Products();
@@ -148,11 +154,11 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 		        	MyCollectionsApiController.log.info("request lidvdid: " + eProd.getLidVid() );
 		        	
 		    		Product product = ElasticSearchUtil.ESentityProductToAPIProduct(eProd);
-		
-		    		Map<String, Object> sourceAsMapJsonProperties = 
-		    				ElasticSearchUtil.elasticHashMapToJsonHashMap(eProd.getProperties());
-		    		
-		    		Map<String, Object> filteredMapJsonProperties = this.getFilteredProperties(sourceAsMapJsonProperties, fields);
+				    		
+		    		Map<String, PropertyValues> filteredMapJsonProperties = ProductBusinessObject.getFilteredProperties(
+		    				eProd.getProperties(), 
+		    				fields,
+		    				null);
 		
 		    		uniqueProperties.addAll(filteredMapJsonProperties.keySet());
 		
@@ -193,7 +199,6 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 				&& (accept.contains("application/json") 
 						|| accept.contains("text/html")
 		 				|| accept.contains("application/xml")
-		 				|| accept.contains("application/pds4+xml")
 		 				|| accept.contains("*/*")))
 		 	|| (accept == null))
 		{
@@ -213,7 +218,9 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     
     private Products getContainingBundle(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean summaryOnly) throws IOException
     {
-		if (!lidvid.contains("::") && !lidvid.endsWith(":")) lidvid = this.getLatestLidVidFromLid(lidvid);
+    		
+    	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
+
     	MyCollectionsApiController.log.info("find all bundles containing the collection lidvid: " + lidvid);
     	MyCollectionsApiController.log.info("find all bundles containing the collection lid: " + lidvid.substring(0, lidvid.indexOf("::")));
     	HashSet<String> uniqueProperties = new HashSet<String>();
@@ -232,21 +239,31 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     	builder.query(QueryBuilders.matchQuery("ref_lid_collection", lidvid.substring(0, lidvid.indexOf("::"))));
     	request.source(builder);
     	response = this.esRegistryConnection.getRestHighLevelClient().search(request,RequestOptions.DEFAULT);
-    	for (int i = start ; start < limit && i < response.getHits().getHits().length ; i++)
-    	{
-	        Map<String, Object> sourceAsMap = response.getHits().getAt(i).getSourceAsMap();
-	        Map<String, Object> filteredMapJsonProperties = this.getFilteredProperties(sourceAsMap, fields);
-	        
-	        uniqueProperties.addAll(filteredMapJsonProperties.keySet());
-
-	        if (!summaryOnly) {
-    	        EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
-    	        Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
-    	        product.setProperties(filteredMapJsonProperties);
-    	        products.addDataItem(product);
-	        }
+    	
+    	try {
+	    	
+	    	for (int i = start ; start < limit && i < response.getHits().getHits().length ; i++)
+	    	{
+		        Map<String, Object> sourceAsMap = response.getHits().getAt(i).getSourceAsMap();
+		        Map<String, PropertyValues> filteredMapJsonProperties = ProductBusinessObject.getFilteredProperties(
+		        		sourceAsMap, 
+		        		fields,
+		        		new ArrayList<String>(Arrays.asList(ElasticSearchUtil.elasticPropertyToJsonProperty(EntitytProductWithBlob.BLOB_PROPERTY)))
+		        		);
+		        
+		        uniqueProperties.addAll(filteredMapJsonProperties.keySet());
+	
+		        if (!summaryOnly) {
+	    	        EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
+	    	        Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
+	    	        product.setProperties(filteredMapJsonProperties);
+	    	        products.addDataItem(product);
+		        }
+	    	}
+    	} catch (UnsupportedElasticSearchProperty e) {
+    		log.error("This should never happen " + e.getMessage());
     	}
-    	summary.setProperties(new ArrayList<String>(uniqueProperties));
+	    summary.setProperties(new ArrayList<String>(uniqueProperties));
     	return products;
     }
 }

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 
 
-public class Pds4XmlProductSerializer extends AbstractHttpMessageConverter<Product> {
+public class Pds4XmlProductSerializer extends AbstractHttpMessageConverter<ProductWithXmlLabel> {
 
 		  public Pds4XmlProductSerializer() {
 		      super(new MediaType("application", "pds4+xml"));
@@ -32,18 +32,20 @@ public class Pds4XmlProductSerializer extends AbstractHttpMessageConverter<Produ
 
 		  @Override
 		  protected boolean supports(Class<?> clazz) {
-		      return Product.class.isAssignableFrom(clazz);
+		      return ProductWithXmlLabel.class.isAssignableFrom(clazz);
 		  }
 
+		  
 		  @Override
-		  protected Product readInternal(Class<? extends Product> clazz, HttpInputMessage inputMessage)
+		  protected ProductWithXmlLabel readInternal(Class<? extends ProductWithXmlLabel> clazz, HttpInputMessage inputMessage)
 		          throws IOException, HttpMessageNotReadableException {
 		     
-		      return new Product();
+		      return new ProductWithXmlLabel();
 		  }
+		  
 
 		  @Override
-		  protected void writeInternal(Product product, HttpOutputMessage outputMessage)
+		  protected void writeInternal(ProductWithXmlLabel product, HttpOutputMessage outputMessage)
 		          throws IOException, HttpMessageNotWritableException {
 		      try {
 		          OutputStream outputStream = outputMessage.getBody();
@@ -51,7 +53,7 @@ public class Pds4XmlProductSerializer extends AbstractHttpMessageConverter<Produ
 		          XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();
 		          XMLStreamWriter writer = outputFactory.createXMLStreamWriter(outputStream);
 		   
-		          String body = ((ProductWithXmlLabel)product).getLabelXml();
+		          String body = product.getLabelXml();
 		          
 		          outputStream.write(body.getBytes());
 		          outputStream.close();
