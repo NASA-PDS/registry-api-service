@@ -205,14 +205,6 @@ public class ElasticSearchRegistrySearchRequestBuilder {
     			new String[] {  EntitytProductWithBlob.BLOB_PROPERTY });
      	
     	searchSourceBuilder.fetchSource(fetchSourceContext);
-    
-     	
-     	/* TODO add the fetchsource to the request to reduce the payload being moved from elasticsearch
-     	List<String> fetched_fields = fields.addAll(c);
-     	
-     	searchSourceBuilder.fetchSource(fields., null);
-     	*/
-    
     	
   	    searchSourceBuilder.timeout(new TimeValue(this.timeOutSeconds, 
     			TimeUnit.SECONDS)); 
