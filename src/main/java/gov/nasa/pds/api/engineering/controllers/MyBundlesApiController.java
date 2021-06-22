@@ -114,19 +114,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (0 < clidvids.size() && start < clidvids.size())
     	{
-    		for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
-    				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
-    						clidvids.subList(start, start+limit < clidvids.size() ? start+limit : clidvids.size()),
-    						fields, this.esRegistryConnection.getRegistryIndex())))
-    		{
-    			uniqueProperties.addAll(kvp.keySet());
-
-    			if (!onlySummary)
-    			{
-    				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class)));
-    				products.getData().get(products.getData().size()-1).setProperties(ProductBusinessObject.getFilteredProperties(kvp, null, null));
-    			}
-    		}
+    		this.fillProductsFromLidvids(products, uniqueProperties, clidvids, fields, start, limit, onlySummary);
     	}
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
@@ -229,20 +217,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (0 < plidvids.size() && start < plidvids.size())
     	{
-    		for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
-    				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
-    						plidvids.subList(start, start+limit < plidvids.size() ? start+limit : plidvids.size()),
-    						fields, this.esRegistryConnection.getRegistryIndex())))
-    		{
-    			uniqueProperties.addAll(kvp.keySet());
-
-    			if (!onlySummary)
-    			{
-    				MyBundlesApiController.log.info("kvp: " + kvp.toString());
-    				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class)));
-    				products.getData().get(products.getData().size()-1).setProperties(ProductBusinessObject.getFilteredProperties(kvp, null, null));
-    			}
-    		}
+    		this.fillProductsFromLidvids(products, uniqueProperties, plidvids, fields, start, limit, onlySummary);
     	}
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));

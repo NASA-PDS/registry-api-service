@@ -3,7 +3,6 @@ package gov.nasa.pds.api.engineering.controllers;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,14 +11,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +29,7 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchReq
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
-import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;
-import gov.nasa.pds.api.engineering.exceptions.UnsupportedElasticSearchProperty;
+
 import gov.nasa.pds.api.model.ProductWithXmlLabel;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.PropertyValues;
@@ -71,7 +65,23 @@ public class MyProductsApiBareController {
     }
     
     
-  
+    protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, int start, int limit, boolean onlySummary) throws IOException
+    {
+    	for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
+				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
+						lidvids.subList(start, start+limit < lidvids.size() ? start+limit : lidvids.size()),
+						fields, this.esRegistryConnection.getRegistryIndex())))
+		{
+			uniqueProperties.addAll(kvp.keySet());
+
+			if (!onlySummary)
+			{
+				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class)));
+				products.getData().get(products.getData().size()-1).setProperties(ProductBusinessObject.getFilteredProperties(kvp, null, null));
+			}
+		}
+
+    }
     protected Products getProducts(String q, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException {
     	
 
