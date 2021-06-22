@@ -30,12 +30,13 @@ import org.elasticsearch.common.unit.TimeValue;
 import gov.nasa.pds.api.engineering.lexer.SearchLexer;
 import gov.nasa.pds.api.engineering.lexer.SearchParser;
 import gov.nasa.pds.api.engineering.elasticsearch.business.CollectionProductRefBusinessObject;
-import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;
 
 public class ElasticSearchRegistrySearchRequestBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(ElasticSearchRegistrySearchRequestBuilder.class);
+	private static final String[] DEFAULT_ALL_FIELDS = { "*" };
+	private static final String[] DEFAULT_BLOB = { "ops:Label_File_Info/ops:blob" };
 	
 	private String registryIndex;
 	private String registryRefIndex;
@@ -236,4 +237,52 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 		
 	}
 	
+	static public SearchRequest getQueryFieldFromLidvid (String lidvid, String field, String es_index)
+	{
+		List<String> fields = new ArrayList<String>(), lidvids = new ArrayList<String>();
+		Map<String,List<String>> kvps = new HashMap<String,List<String>>();
+		fields.add(field);
+		lidvids.add(lidvid);
+		kvps.put("lidvid", lidvids);
+		return getQueryForKVPs (kvps, fields, es_index);
+	}
+
+	static public SearchRequest getQueryFieldFromKVP (String key, List<String>values, String field, String es_index)
+	{
+		List<String> fields = new ArrayList<String>();
+		Map<String,List<String>> kvps = new HashMap<String,List<String>>();
+		fields.add(field);
+		kvps.put(key, values);
+		return getQueryForKVPs (kvps, fields, es_index);		
+	}
+
+	static public SearchRequest getQueryFieldsFromKVP (String key, List<String> values, List<String> fields, String es_index)
+	{
+		Map<String,List<String>> kvps = new HashMap<String,List<String>>();
+		kvps.put(key, values);
+		return getQueryForKVPs (kvps, fields, es_index);		
+	}
+
+	static public SearchRequest getQueryForKVPs (Map<String,List<String>> kvps, List<String> fields, String es_index)
+	{
+    	String[] aFields = new String[fields == null ? 0 : fields.size()];
+    	if (fields != null)
+    	{
+    		for (int i = 0 ;  i < fields.size(); i++) aFields[i] = ElasticSearchUtil.jsonPropertyToElasticProperty(fields.get(i));
+    	}
+
+    	BoolQueryBuilder find_kvps = QueryBuilders.boolQuery();
+    	SearchRequest request = new SearchRequest(es_index)
+    			.source(new SearchSourceBuilder().query(find_kvps)
+    					.fetchSource(fields == null ? DEFAULT_ALL_FIELDS : aFields, DEFAULT_BLOB));
+
+    	for (String key : kvps.keySet())
+    	{
+    		for (String value : kvps.get(key))
+    		{
+    			find_kvps.should (QueryBuilders.termQuery (key, value));
+    		}
+    	}
+    	return request;
+	}
 }

@@ -1,12 +1,14 @@
 package gov.nasa.pds.api.engineering.elasticsearch;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -127,4 +129,14 @@ public class ElasticSearchUtil {
 				
 	}
 
+	static public List<Map<String,Object>> collate (RestHighLevelClient client, SearchRequest request) throws IOException
+	{
+    	List<Map<String,Object>> results = new ArrayList<Map<String,Object>>();
+
+    	for (SearchHit hit : client.search(request, RequestOptions.DEFAULT).getHits())
+    	{
+    		results.add(hit.getSourceAsMap());
+    	}
+    	return results;
+	}
 }
