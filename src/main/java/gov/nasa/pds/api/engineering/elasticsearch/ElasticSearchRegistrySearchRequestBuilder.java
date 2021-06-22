@@ -256,6 +256,25 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 		return getQueryForKVPs (kvps, fields, es_index);		
 	}
 
+	static public SearchRequest getQueryFieldFromKVP (String key, String value, String field, String es_index)
+	{
+		List<String> fields = new ArrayList<String>(), values = new ArrayList<String>();
+		Map<String,List<String>> kvps = new HashMap<String,List<String>>();
+		fields.add(field);
+		values.add(value);
+		kvps.put(key, values);
+		return getQueryForKVPs (kvps, fields, es_index);
+	}
+
+	static public SearchRequest getQueryFieldsFromKVP (String key, String value, List<String> fields, String es_index, boolean term)
+	{
+		List<String> values = new ArrayList<String>();
+		Map<String,List<String>> kvps = new HashMap<String,List<String>>();
+		values.add(value);
+		kvps.put(key, values);
+		return getQueryForKVPs (kvps, fields, es_index, term);
+	}
+
 	static public SearchRequest getQueryFieldsFromKVP (String key, List<String> values, List<String> fields, String es_index)
 	{
 		Map<String,List<String>> kvps = new HashMap<String,List<String>>();
@@ -264,6 +283,11 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 	}
 
 	static public SearchRequest getQueryForKVPs (Map<String,List<String>> kvps, List<String> fields, String es_index)
+	{
+		return getQueryForKVPs (kvps, fields, es_index, true);
+	}
+
+	static public SearchRequest getQueryForKVPs (Map<String,List<String>> kvps, List<String> fields, String es_index, boolean term)
 	{
     	String[] aFields = new String[fields == null ? 0 : fields.size()];
     	if (fields != null)
@@ -280,7 +304,8 @@ public class ElasticSearchRegistrySearchRequestBuilder {
     	{
     		for (String value : kvps.get(key))
     		{
-    			find_kvps.should (QueryBuilders.termQuery (key, value));
+    			if (term) find_kvps.should (QueryBuilders.termQuery (key, value));
+    			else find_kvps.should (QueryBuilders.matchQuery (key, value));
     		}
     	}
     	return request;

@@ -4,8 +4,6 @@ package gov.nasa.pds.api.engineering.controllers;
 import gov.nasa.pds.api.base.BundlesApi;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
-import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
-import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
@@ -116,6 +114,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	{
     		this.fillProductsFromLidvids(products, uniqueProperties, clidvids, fields, start, limit, onlySummary);
     	}
+    	else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
     	return products;	
@@ -212,13 +211,15 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     			}
     		}
     	}
-
+    	else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
+    	
     	MyBundlesApiController.log.info("found " + Integer.toString(plidvids.size()) + " products in this bundle");
 
     	if (0 < plidvids.size() && start < plidvids.size())
     	{
     		this.fillProductsFromLidvids(products, uniqueProperties, plidvids, fields, start, limit, onlySummary);
     	}
+    	else MyBundlesApiController.log.warn ("Did not find any products for bundle lidvid: " + lidvid);
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
     	return products;	
