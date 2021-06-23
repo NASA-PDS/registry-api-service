@@ -32,7 +32,7 @@ import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 
 import gov.nasa.pds.api.model.ProductWithXmlLabel;
 import gov.nasa.pds.model.Product;
-import gov.nasa.pds.model.PropertyValues;
+import gov.nasa.pds.model.PropertyArrayValues;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
 
@@ -63,9 +63,8 @@ public class MyProductsApiBareController {
         this.request = request;
          
     }
-    
-    
-    protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, int start, int limit, boolean onlySummary) throws IOException
+
+  protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, int start, int limit, boolean onlySummary) throws IOException
     {
     	for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
@@ -98,8 +97,6 @@ public class MyProductsApiBareController {
     }
 
     protected Products getProducts(String q, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException {
-    	
-
     		        	
     	SearchRequest searchRequest = this.searchRequestBuilder.getSearchProductsRequest(q, fields, start, limit, this.presetCriteria);
     	
@@ -129,7 +126,7 @@ public class MyProductsApiBareController {
     		for (SearchHit searchHit : searchResponse.getHits()) {
     	        Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
     	        
-    	        Map<String, PropertyValues> filteredMapJsonProperties = ProductBusinessObject.getFilteredProperties(
+    	        Map<String, XMLMashallableProperyValue> filteredMapJsonProperties = ProductBusinessObject.getFilteredProperties(
     	        		sourceAsMap, 
     	        		fields, 
     	        		null
@@ -140,7 +137,7 @@ public class MyProductsApiBareController {
     	        if (!onlySummary) {
         	        EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
         	        Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
-        	        product.setProperties(filteredMapJsonProperties);
+        	        product.setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)filteredMapJsonProperties);
         	        products.addDataItem(product);
     	        }
     	        

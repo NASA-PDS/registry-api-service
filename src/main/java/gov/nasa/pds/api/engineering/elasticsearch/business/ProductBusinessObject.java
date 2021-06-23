@@ -28,9 +28,10 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;
 import gov.nasa.pds.api.engineering.exceptions.UnsupportedElasticSearchProperty;
-import gov.nasa.pds.api.model.ProductWithXmlLabel;
+import gov.nasa.pds.api.model.xml.ProductWithXmlLabel;
 import gov.nasa.pds.model.Product;
-import gov.nasa.pds.model.PropertyValues;
+import gov.nasa.pds.model.PropertyArrayValues;
+import gov.nasa.pds.api.model.xml.XMLMashallableProperyValue;
 
 
 public class ProductBusinessObject {
@@ -93,19 +94,20 @@ public class ProductBusinessObject {
 		}
 	   
 	   
-	   private static PropertyValues object2PropertyValue(Object o) {
-		   PropertyValues pv = new PropertyValues();
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static XMLMashallableProperyValue object2PropertyValue(Object o) {
+		   XMLMashallableProperyValue pv = new XMLMashallableProperyValue();
 		   
 		   if (o instanceof List<?>) {
 			   for (Object p : (List<?>) o) {
-				   pv.addValuesItem(String.valueOf(p));
+				   ((ArrayList<String>)(PropertyArrayValues)pv).add(String.valueOf(p));
 			   }
 			   
 		   }
 		   else {
 			   // TODO find a type which make String castable in PropertyValue, 
 			   // currently I am desperate so I transform String in a List<String>
-		       pv.addValuesItem(String.valueOf(o));			   
+			   ((ArrayList<String>)(PropertyArrayValues)pv).add(String.valueOf(o));			   
 		   }
 		   
 		   return pv;
@@ -119,12 +121,12 @@ public class ProductBusinessObject {
 	 * @param excluded_fields is ignored is included_fields is not null and not empty
 	 * @return
 	 */
-	public static Map<String, PropertyValues> getFilteredProperties(
+	public static Map<String, XMLMashallableProperyValue> getFilteredProperties(
 			   Map<String, Object> sourceAsMap, 
 			   List<String> included_fields, 
 			   List<String> excluded_fields){
 	    	
-	        Map<String, PropertyValues> filteredMapJsonProperties  = new HashMap<String, PropertyValues>();
+	        Map<String, XMLMashallableProperyValue> filteredMapJsonProperties  = new HashMap<String, XMLMashallableProperyValue>();
 	        	        
 	        if ((included_fields == null) || (included_fields.size() ==0)) {
 	        	
@@ -178,7 +180,8 @@ public class ProductBusinessObject {
 	   }
 	   
 	   
-	   public Product getProduct(String lidvid, @Nullable List<String> fields) throws IOException {
+	   @SuppressWarnings("unchecked")
+	public Product getProduct(String lidvid, @Nullable List<String> fields) throws IOException {
 		   GetRequest getProductRequest = this.searchRequestBuilder.getGetProductRequest(lidvid, false);
 		   
 		   GetResponse getResponse = null;
@@ -194,7 +197,7 @@ public class ProductBusinessObject {
 	       	if (getResponse.isExists()) {
 	       		log.info("get response " + getResponse.toString());
 	       		Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-	       		Map<String, PropertyValues> filteredMapJsonProperties = 
+	       		Map<String, XMLMashallableProperyValue> filteredMapJsonProperties = 
 	       				ProductBusinessObject.getFilteredProperties(sourceAsMap, fields, null);
 	       		
 	       		EntityProduct entityProduct;
@@ -203,7 +206,7 @@ public class ProductBusinessObject {
 	       		
 	       		Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);
 	       	
-	       		product.setProperties(filteredMapJsonProperties);
+	       		product.setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)filteredMapJsonProperties);
 	       		
 	       		return product;
 			   
@@ -219,7 +222,8 @@ public class ProductBusinessObject {
 	   }
 	   
 	   // TODO make the method more generic by having the name of the class we want to cast the object into instead of a boolean, the code will be more neat also
-	   public ProductWithXmlLabel getProductWithXml(String lidvid, @Nullable List<String> field) throws IOException {
+	   @SuppressWarnings("unchecked")
+	public ProductWithXmlLabel getProductWithXml(String lidvid, @Nullable List<String> field) throws IOException {
 		   
 		   GetRequest getProductRequest = this.searchRequestBuilder.getGetProductRequest(lidvid, true);
 		   
@@ -239,7 +243,7 @@ public class ProductBusinessObject {
 	       		
 	       		try {
 	       		
-		       		Map<String, PropertyValues> filteredMapJsonProperties = 
+		       		Map<String, XMLMashallableProperyValue> filteredMapJsonProperties = 
 		       				ProductBusinessObject.getFilteredProperties(
 		       						sourceAsMap, 
 		       						null,
@@ -251,7 +255,7 @@ public class ProductBusinessObject {
 		       		entityProduct = this.objectMapper.convertValue(sourceAsMap, EntitytProductWithBlob.class);
 		       		
 		       		ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);    		
-		       		product.setProperties(filteredMapJsonProperties);
+		       		product.setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)filteredMapJsonProperties);
 		       	
 		       		return product;
 		       		

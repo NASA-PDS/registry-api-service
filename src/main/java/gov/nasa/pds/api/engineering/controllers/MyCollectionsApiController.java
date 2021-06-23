@@ -113,12 +113,13 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     		
 	
     
-    private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException {
+    @SuppressWarnings("unchecked")
+	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException {
   	
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyCollectionsApiController.log.info("request collection lidvid, collections children: " + lidvid);
 
-    	HashSet<String> uniqueProperties = new HashSet<String>();
+      HashSet<String> uniqueProperties = new HashSet<String>();
     	List<String> plidvids = new ArrayList<String>();
     	Products products = new Products();
       	Summary summary = new Summary();
@@ -184,7 +185,8 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
     
-    private Products getContainingBundle(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean summaryOnly) throws IOException
+    @SuppressWarnings("unchecked")
+	private Products getContainingBundle(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean summaryOnly) throws IOException
     {
     		
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);

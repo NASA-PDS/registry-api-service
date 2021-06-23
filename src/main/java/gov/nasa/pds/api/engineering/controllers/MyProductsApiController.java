@@ -91,6 +91,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 	}
 
 
+	@SuppressWarnings("unchecked")
 	private Products getContainingBundle(String lidvid, @Valid Integer start, @Valid Integer limit,
 			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException
 	{    	
@@ -176,6 +177,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	return lidvids;
 	}
 
+	@SuppressWarnings("unchecked")
 	private Products getContainingCollection(String lidvid, @Valid Integer start, @Valid Integer limit,
 			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException
 	{	
