@@ -184,12 +184,10 @@ public class ProductBusinessObject {
 	   }
 	   
 	   
-<<<<<<< HEAD
+
 	   @SuppressWarnings("unchecked")
-	public Product getProduct(String lidvid, @Nullable List<String> fields) throws IOException {
-=======
 	   public Product getProduct(String lidvid, URL baseURL, @Nullable List<String> fields) throws IOException {
->>>>>>> manage baseUrl from proxy, manage context path for swagger doc
+
 		   GetRequest getProductRequest = this.searchRequestBuilder.getGetProductRequest(lidvid, false);
 		   
 		   GetResponse getResponse = null;
@@ -263,7 +261,7 @@ public class ProductBusinessObject {
 		       		entityProduct = this.objectMapper.convertValue(sourceAsMap, EntitytProductWithBlob.class);
 		       		
 
-		       		ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct);    		
+		       		ProductWithXmlLabel product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct, baseURL);    		
 		       		product.setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)filteredMapJsonProperties);
 		       	
 		       		return product;
