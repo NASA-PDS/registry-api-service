@@ -1,10 +1,14 @@
 package gov.nasa.pds.api.engineering.elasticsearch;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.http.client.utils.URIBuilder;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -12,7 +16,6 @@ import org.elasticsearch.search.SearchHit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;

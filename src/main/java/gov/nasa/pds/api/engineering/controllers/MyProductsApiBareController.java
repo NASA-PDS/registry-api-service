@@ -33,7 +33,9 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 
-import gov.nasa.pds.api.model.ProductWithXmlLabel;
+import gov.nasa.pds.api.model.xml.ProductWithXmlLabel;
+import gov.nasa.pds.api.model.xml.XMLMashallableProperyValue;
+
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.PropertyArrayValues;
 import gov.nasa.pds.model.Products;
@@ -76,7 +78,8 @@ public class MyProductsApiBareController {
          
     }
 
-  protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, int start, int limit, boolean onlySummary) throws IOException
+  @SuppressWarnings("unchecked")
+protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, int start, int limit, boolean onlySummary) throws IOException
     {
     	for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
@@ -87,14 +90,15 @@ public class MyProductsApiBareController {
 
 			if (!onlySummary)
 			{
-				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class)));
-				products.getData().get(products.getData().size()-1).setProperties(ProductBusinessObject.getFilteredProperties(kvp, null, null));
+				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class), this.getBaseURL()));
+				products.getData().get(products.getData().size()-1).setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)ProductBusinessObject.getFilteredProperties(kvp, null, null));
 			}
 		}
 
     }
 
-    protected void fillProductsFromParents (Products products, HashSet<String> uniqueProperties, List<Map<String,Object>> results, boolean onlySummary) throws IOException
+    @SuppressWarnings("unchecked")
+	protected void fillProductsFromParents (Products products, HashSet<String> uniqueProperties, List<Map<String,Object>> results, boolean onlySummary) throws IOException
     {
     	for (Map<String,Object> kvp : results)
     	{
@@ -102,13 +106,14 @@ public class MyProductsApiBareController {
 
 			if (!onlySummary)
 			{
-				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class)));
-				products.getData().get(products.getData().size()-1).setProperties(ProductBusinessObject.getFilteredProperties(kvp, null, null));
+				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class), this.getBaseURL()));
+				products.getData().get(products.getData().size()-1).setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)ProductBusinessObject.getFilteredProperties(kvp, null, null));
 			}
     	}
     }
 
-    protected Products getProducts(String q, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException {
+    @SuppressWarnings("unchecked")
+	protected Products getProducts(String q, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException {
     		        	
     	SearchRequest searchRequest = this.searchRequestBuilder.getSearchProductsRequest(q, fields, start, limit, this.presetCriteria);
     	
@@ -237,5 +242,31 @@ public class MyProductsApiBareController {
         return new ResponseEntity<Product>(HttpStatus.NOT_IMPLEMENTED);
     }
     	
+    private boolean proxyRunsOnDefaultPort() {
+    	return (((this.context.getScheme() == "https")  && (this.context.getServerPort() == 443)) 
+    			|| ((this.context.getScheme() == "http")  && (this.context.getServerPort() == 80)));
+    }
+ 
+    protected URL getBaseURL() {
+    	try {
+    		MyProductsApiBareController.log.debug("contextPath is: " + this.contextPath);
+    		
+    		URL baseURL;
+    		if (this.proxyRunsOnDefaultPort()) {
+    			baseURL = new URL(this.context.getScheme(), this.context.getServerName(), this.contextPath);
+    		} 
+    		else {
+    			baseURL = new URL(this.context.getScheme(), this.context.getServerName(), this.context.getServerPort(), this.contextPath);
+    		}
+	      	
+	      	MyProductsApiBareController.log.info("baseUrl is " + baseURL.toString());
+	      	return baseURL;
+	      	
+
+    	} catch (MalformedURLException e) {
+    		log.error("Server URL was not retrieved");
+    		return null;
+    	}
+    }
 
 }
