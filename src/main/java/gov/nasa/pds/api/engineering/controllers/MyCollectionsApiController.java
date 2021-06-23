@@ -113,7 +113,6 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     		
 	
     
-    @SuppressWarnings("unchecked")
 	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException {
   	
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
@@ -185,7 +184,6 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
     
-    @SuppressWarnings("unchecked")
 	private Products getContainingBundle(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean summaryOnly) throws IOException
     {
     		

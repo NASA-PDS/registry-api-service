@@ -91,12 +91,11 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 	}
 
 
-	@SuppressWarnings("unchecked")
 	private Products getContainingBundle(String lidvid, @Valid Integer start, @Valid Integer limit,
 			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException
 	{    	
     	if (!lidvid.contains("::")) lidvid = productBO.getLatestLidVidFromLid(lidvid);
-       	MyProductsApiController.log.info("find all bundles containing the collection lidvid: " + lidvid);
+       	MyProductsApiController.log.info("find all bundles containing the product lidvid: " + lidvid);
 
        	HashSet<String> uniqueProperties = new HashSet<String>();
        	List<String> collectionLIDs = this.getCollectionLidvids(lidvid, true);
@@ -113,7 +112,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	if (0 < collectionLIDs.size())
     	{
     		SearchRequest request = ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP
-    				(lidvid, collectionLIDs, fields, this.esRegistryConnection.getRegistryIndex(), false);
+    				("ref_lid_collection", collectionLIDs, fields, this.esRegistryConnection.getRegistryIndex(), false);
     		
     		request.source().from(start);
     		request.source().size(limit);
@@ -156,34 +155,36 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
 
-	private List<String> getCollectionLidvids (String lidvid, boolean justLID) throws IOException
+	private List<String> getCollectionLidvids (String lidvid, boolean noVer) throws IOException
 	{
 		List<String> fields = new ArrayList<String>(), lidvids = new ArrayList<String>();
-		fields.add(justLID ? "collection_lid" : "collection_lidvid");
+		String field = noVer ? "collection_lid" : "collection_lidvid";
+
+		fields.add(field);
     	for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
     			ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("product_lidvid",
-    					lidvid, fields, this.esRegistryConnection.getRegistryIndex(), false)))
+    					lidvid, fields, this.esRegistryConnection.getRegistryRefIndex(), false)))
     	{
-			if (kvp.get(justLID ? "collection_lid" : "collection_lidvid") instanceof String)
-			{ lidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get(justLID ? "collection_lid" : "collection_lidvid").toString())); }
+			if (kvp.get(field) instanceof String)
+			{ lidvids.add(kvp.get(field).toString()); }
 			else
 			{
 				@SuppressWarnings("unchecked")
-				List<String> clids = (List<String>)kvp.get(justLID ? "collection_lid" : "collection_lidvid");
-				for (String clid : clids)
-				{ lidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
+				List<String> clids = (List<String>)kvp.get(field);
+				for (String clid : clids) { lidvids.add(clid); }
 			}
     	}
     	return lidvids;
 	}
 
-	@SuppressWarnings("unchecked")
 	private Products getContainingCollection(String lidvid, @Valid Integer start, @Valid Integer limit,
 			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException
 	{	
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
-       	MyProductsApiController.log.info("find all bundles containing the collection lidvid: " + lidvid);
-    	HashSet<String> uniqueProperties = new HashSet<String>();
+       	MyProductsApiController.log.info("find all bundles containing the product lidvid: " + lidvid);
+
+       	HashSet<String> uniqueProperties = new HashSet<String>();
+       	List<String> collectionLidvids = this.getCollectionLidvids(lidvid, false);
     	Products products = new Products();
       	Summary summary = new Summary();
 
@@ -193,8 +194,12 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	summary.setLimit(limit);
     	summary.setSort(sort);
     	products.setSummary(summary);
-    	this.fillProductsFromLidvids(products, uniqueProperties, this.getCollectionLidvids(lidvid, false), fields, start, limit, summaryOnly);
-	    summary.setProperties(new ArrayList<String>(uniqueProperties));
+    	
+    	if (0 < collectionLidvids.size())
+    	{ this.fillProductsFromLidvids(products, uniqueProperties, collectionLidvids, fields, start, limit, summaryOnly); }
+    	else MyProductsApiController.log.warn("Did not find a product with lidvid: " + lidvid);
+
+    	summary.setProperties(new ArrayList<String>(uniqueProperties));
     	return products;
 	}
 }

@@ -95,7 +95,6 @@ public class ProductBusinessObject {
 		}
 	   
 	   
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static XMLMashallableProperyValue object2PropertyValue(Object o) {
 		   XMLMashallableProperyValue pv = new XMLMashallableProperyValue();
 		   
