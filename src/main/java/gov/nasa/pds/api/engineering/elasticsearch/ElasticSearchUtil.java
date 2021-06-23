@@ -9,6 +9,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.search.SearchHit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -35,18 +36,37 @@ public class ElasticSearchUtil {
 			return elasticProperty.replace('/', '.');
 	 }
 	
-	static private void addReference (ArrayList<Reference> to, String ID, String baseURL)
+	static private void addReference (ArrayList<Reference> to, String ID, URL baseURL)
 	{
 		Reference reference = new Reference();
 		reference.setId(ID);
-		reference.setHref(baseURL + "/products/" + reference.getId());
+
+		String spec = "/products/" + reference.getId();
+		
+		try {
+			
+			URIBuilder uriBuilder = new URIBuilder(baseURL.toURI());
+			URI uri = uriBuilder.setPath(uriBuilder.getPath() + spec)
+			          .build()
+			          .normalize();
+			
+			
+			reference.setHref(uri.toString());
+			
+		} catch (URISyntaxException e) {
+			log.warn("Unable to create external URL for reference ");
+			e.printStackTrace();
+			reference.setHref(spec);
+		}
+		
 		to.add(reference);
 	}
 	
 	
 	static private Product addPropertiesFromESEntity(
 			Product product, 
-			EntityProduct ep
+			EntityProduct ep,
+			URL baseURL
 			) {
 		product.setId(ep.getLidVid());
 		product.setType(ep.getProductClass());
@@ -70,7 +90,7 @@ public class ElasticSearchUtil {
 		ArrayList<Reference> observationSystemComponent = new ArrayList<Reference>();
 		ArrayList<Reference> targets = new ArrayList<Reference>();
 		Metadata meta = new Metadata();
-		String baseURL = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+		//String baseURL = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
 
 		String version = ep.getVersion();
 		if (version != null) {
@@ -108,23 +128,21 @@ public class ElasticSearchUtil {
 
 	}
 	
-	static public ProductWithXmlLabel ESentityProductToAPIProduct(EntitytProductWithBlob ep) {
+	static public ProductWithXmlLabel ESentityProductToAPIProduct(EntitytProductWithBlob ep, URL baseURL) {
 		ElasticSearchUtil.log.info("convert ES object to API object with XML label");
 		ProductWithXmlLabel product = new ProductWithXmlLabel();
 		product.setLabelXml(ep.getPDS4XML());
-		return (ProductWithXmlLabel)addPropertiesFromESEntity(product, ep);
+		return (ProductWithXmlLabel)addPropertiesFromESEntity(product, ep, baseURL);
 		
 	}
 	
 
-	static public Product ESentityProductToAPIProduct(EntityProduct ep) {
-		
-	
+	static public Product ESentityProductToAPIProduct(EntityProduct ep, URL baseURL) {
 		ElasticSearchUtil.log.info("convert ES object to API object without XML label");
 		
 		Product product = new Product();
 		
-		return addPropertiesFromESEntity(product, ep);
+		return addPropertiesFromESEntity(product, ep, baseURL);
 		
 				
 	}

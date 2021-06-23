@@ -1,19 +1,17 @@
 # Changelog
 
-## [«unknown»](https://github.com/NASA-PDS/registry-api-service/tree/«unknown») (2021-06-23)
-
-[Full Changelog](https://github.com/NASA-PDS/registry-api-service/compare/v0.3.0-SNAPSHOT...«unknown»)
-
-**Defects:**
-
-- As an API caller, I expect MD5s and file reference URLs to have real values and not the string "null" [\#43](https://github.com/NASA-PDS/registry-api-service/issues/43) [[s.high](https://github.com/NASA-PDS/registry-api-service/labels/s.high)]
-
 ## [v0.3.0-SNAPSHOT](https://github.com/NASA-PDS/registry-api-service/tree/v0.3.0-SNAPSHOT) (2021-06-23)
 
 [Full Changelog](https://github.com/NASA-PDS/registry-api-service/compare/v0.2.0...v0.3.0-SNAPSHOT)
 
+**Requirements:**
+
+- As a user, I want the end-point /api to redirect to the API documentation [\#39](https://github.com/NASA-PDS/registry-api-service/issues/39)
+- As a SA, I want to deploy the API behind a proxy  [\#10](https://github.com/NASA-PDS/registry-api-service/issues/10)
+
 **Defects:**
 
+- As an API caller, I expect MD5s and file reference URLs to have real values and not the string "null" [\#43](https://github.com/NASA-PDS/registry-api-service/issues/43) [[s.high](https://github.com/NASA-PDS/registry-api-service/labels/s.high)]
 - XML and PDS4+XML Response Formats are invalid [\#27](https://github.com/NASA-PDS/registry-api-service/issues/27) [[s.high](https://github.com/NASA-PDS/registry-api-service/labels/s.high)]
 - error 500 on GET /collections/:lidvid:/products [\#17](https://github.com/NASA-PDS/registry-api-service/issues/17) [[s.high](https://github.com/NASA-PDS/registry-api-service/labels/s.high)]
 

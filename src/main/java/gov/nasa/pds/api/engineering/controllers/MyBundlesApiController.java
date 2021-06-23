@@ -118,7 +118,6 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
     	return products;	
-
     }
 
     private ResponseEntity<Products> getBundlesCollections(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) {
