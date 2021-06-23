@@ -82,6 +82,21 @@ public class MyProductsApiBareController {
 		}
 
     }
+
+    protected void fillProductsFromParents (Products products, HashSet<String> uniqueProperties, List<Map<String,Object>> results, boolean onlySummary) throws IOException
+    {
+    	for (Map<String,Object> kvp : results)
+    	{
+			uniqueProperties.addAll(kvp.keySet());
+
+			if (!onlySummary)
+			{
+				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class)));
+				products.getData().get(products.getData().size()-1).setProperties(ProductBusinessObject.getFilteredProperties(kvp, null, null));
+			}
+    	}
+    }
+
     protected Products getProducts(String q, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException {
     	
 

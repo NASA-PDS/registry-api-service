@@ -282,6 +282,13 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 		return getQueryForKVPs (kvps, fields, es_index);		
 	}
 
+	static public SearchRequest getQueryFieldsFromKVP (String key, List<String> values, List<String> fields, String es_index, boolean term)
+	{
+		Map<String,List<String>> kvps = new HashMap<String,List<String>>();
+		kvps.put(key, values);
+		return getQueryForKVPs (kvps, fields, es_index, term);		
+	}
+
 	static public SearchRequest getQueryForKVPs (Map<String,List<String>> kvps, List<String> fields, String es_index)
 	{
 		return getQueryForKVPs (kvps, fields, es_index, true);

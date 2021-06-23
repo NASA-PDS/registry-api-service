@@ -4,7 +4,6 @@ package gov.nasa.pds.api.engineering.controllers;
 import gov.nasa.pds.api.base.CollectionsApi;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
-import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
@@ -25,7 +24,6 @@ import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 
 import gov.nasa.pds.api.engineering.elasticsearch.business.LidVidNotFoundException;
-import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -207,18 +205,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     	products.setSummary(summary);
     	request.source().size(limit);
     	request.source().from(start);
-    	
-    	for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(), request))
-    	{
-			uniqueProperties.addAll(kvp.keySet());
-
-			if (!summaryOnly)
-			{
-				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class)));
-				products.getData().get(products.getData().size()-1).setProperties(ProductBusinessObject.getFilteredProperties(kvp, null, null));
-			}
-    	}
-    	
+    	this.fillProductsFromParents(products, uniqueProperties, ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(), request), summaryOnly);
 	    summary.setProperties(new ArrayList<String>(uniqueProperties));
     	return products;
     }
