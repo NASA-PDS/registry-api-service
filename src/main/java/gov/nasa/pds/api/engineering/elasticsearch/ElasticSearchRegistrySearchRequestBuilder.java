@@ -311,7 +311,8 @@ public class ElasticSearchRegistrySearchRequestBuilder {
     	BoolQueryBuilder find_kvps = QueryBuilders.boolQuery();
     	SearchRequest request = new SearchRequest(es_index)
     			.source(new SearchSourceBuilder().query(find_kvps)
-    					.fetchSource(fields == null ? DEFAULT_ALL_FIELDS : aFields, DEFAULT_BLOB));
+    					.fetchSource(fields == null ? DEFAULT_ALL_FIELDS : aFields, DEFAULT_BLOB)
+    					.size(Integer.MAX_VALUE));
 
     	for (String key : kvps.keySet())
     	{
