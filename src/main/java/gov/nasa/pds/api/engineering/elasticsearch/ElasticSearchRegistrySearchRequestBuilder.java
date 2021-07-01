@@ -18,11 +18,6 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
-
-import ch.qos.logback.core.joran.util.beans.BeanDescription;
-
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -38,6 +33,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import gov.nasa.pds.api.engineering.lexer.SearchLexer;
 import gov.nasa.pds.api.engineering.lexer.SearchParser;
 import gov.nasa.pds.api.engineering.elasticsearch.business.CollectionProductRefBusinessObject;
+import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;
 
 public class ElasticSearchRegistrySearchRequestBuilder {
@@ -305,10 +301,11 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 
 	static public SearchRequest getQueryForKVPs (Map<String,List<String>> kvps, List<String> fields, String es_index, boolean term)
 	{
-    	String[] aFields = new String[fields == null ? 0 : fields.size()];
+    	String[] aFields = new String[fields == null ? 0 : fields.size() + EntityProduct.JSON_PROPERTIES.length];
     	if (fields != null)
     	{
-    		for (int i = 0 ;  i < fields.size(); i++) aFields[i] = ElasticSearchUtil.jsonPropertyToElasticProperty(fields.get(i));
+    		for (int i = 0 ; i < EntityProduct.JSON_PROPERTIES.length ; i++) aFields[i] = EntityProduct.JSON_PROPERTIES[i];
+    		for (int i = 0 ; i < fields.size(); i++) aFields[i+EntityProduct.JSON_PROPERTIES.length] = ElasticSearchUtil.jsonPropertyToElasticProperty(fields.get(i));
     	}
 
     	BoolQueryBuilder find_kvps = QueryBuilders.boolQuery();
