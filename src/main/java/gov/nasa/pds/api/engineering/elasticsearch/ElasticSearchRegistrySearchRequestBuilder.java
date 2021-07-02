@@ -312,7 +312,7 @@ public class ElasticSearchRegistrySearchRequestBuilder {
     	SearchRequest request = new SearchRequest(es_index)
     			.source(new SearchSourceBuilder().query(find_kvps)
     					.fetchSource(fields == null ? DEFAULT_ALL_FIELDS : aFields, DEFAULT_BLOB)
-    					.size(Integer.MAX_VALUE));
+    					.size(10000)); // 10000 is a bit random but is ES configured max
 
     	for (String key : kvps.keySet())
     	{
