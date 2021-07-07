@@ -56,7 +56,12 @@ public class ElasticSearchHitIterator implements Iterable<Map<String,Object>>,It
 	{
 		if (this.hasNext())
 		{
-			try { return this.getAt(this.at++).getSourceAsMap(); }
+			try
+			{ 
+				SearchHit hit = this.getAt(this.at);
+				at++;
+				return hit.getSourceAsMap();
+			}
 			catch (IOException ioe) { return null; }
 		}
 		else { return null; }
