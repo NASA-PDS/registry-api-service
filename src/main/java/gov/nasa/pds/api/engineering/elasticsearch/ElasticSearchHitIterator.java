@@ -33,7 +33,7 @@ public class ElasticSearchHitIterator implements Iterable<Map<String,Object>>,It
 		return this.client.search (this.request, RequestOptions.DEFAULT).getHits();
 	}
 
-	private SearchHit getAt(int index) throws IOException
+	private SearchHit getAt() throws IOException
 	{
 		if (this.size <= this.at)
 		{
@@ -58,7 +58,7 @@ public class ElasticSearchHitIterator implements Iterable<Map<String,Object>>,It
 		{
 			try
 			{ 
-				SearchHit hit = this.getAt(this.at);
+				SearchHit hit = this.getAt();
 				at++;
 				return hit.getSourceAsMap();
 			}

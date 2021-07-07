@@ -44,6 +44,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 	
     }
 
+    @Override
     public ResponseEntity<Product> bundleByLidvid(@ApiParam(value = "lidvid (urn)",required=true) @PathVariable("lidvid") String lidvid)
     {
     	return this.getProductResponseEntity(lidvid);
