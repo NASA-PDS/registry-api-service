@@ -80,9 +80,9 @@ public class MyProductsApiBareController {
     }
 
   @SuppressWarnings("unchecked")
-protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, int limit, boolean onlySummary) throws IOException
+protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, boolean onlySummary) throws IOException
     {
-    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
+    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(lidvids.size(), this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
 						lidvids, fields, this.esRegistryConnection.getRegistryIndex())))
 		{

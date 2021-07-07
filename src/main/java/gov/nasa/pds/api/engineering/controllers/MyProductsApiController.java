@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gov.nasa.pds.api.base.ProductsApi;
+import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.model.Product;
@@ -98,7 +99,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
        	MyProductsApiController.log.info("find all bundles containing the product lidvid: " + lidvid);
 
        	HashSet<String> uniqueProperties = new HashSet<String>();
-       	List<String> collectionLIDs = this.getCollectionLidvids(lidvid, true);
+       	List<String> collectionLIDs = this.getCollectionLidvids(lidvid, limit, true);
     	Products products = new Products();
     	Summary summary = new Summary();
 
@@ -155,13 +156,13 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
 
-	private List<String> getCollectionLidvids (String lidvid, boolean noVer) throws IOException
+	private List<String> getCollectionLidvids (String lidvid, int limit, boolean noVer) throws IOException
 	{
 		List<String> fields = new ArrayList<String>(), lidvids = new ArrayList<String>();
 		String field = noVer ? "collection_lid" : "collection_lidvid";
 
 		fields.add(field);
-    	for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
+    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
     			ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("product_lidvid",
     					lidvid, fields, this.esRegistryConnection.getRegistryRefIndex(), false)))
     	{
@@ -184,7 +185,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
        	MyProductsApiController.log.info("find all bundles containing the product lidvid: " + lidvid);
 
        	HashSet<String> uniqueProperties = new HashSet<String>();
-       	List<String> collectionLidvids = this.getCollectionLidvids(lidvid, false);
+       	List<String> collectionLidvids = this.getCollectionLidvids(lidvid, limit, false);
     	Products products = new Products();
       	Summary summary = new Summary();
 
@@ -196,7 +197,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	products.setSummary(summary);
     	
     	if (0 < collectionLidvids.size())
-    	{ this.fillProductsFromLidvids(products, uniqueProperties, collectionLidvids, fields, start, limit, summaryOnly); }
+    	{ this.fillProductsFromLidvids(products, uniqueProperties, collectionLidvids.subList(start, start+limit), fields, summaryOnly); }
     	else MyProductsApiController.log.warn("Did not find a product with lidvid: " + lidvid);
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));

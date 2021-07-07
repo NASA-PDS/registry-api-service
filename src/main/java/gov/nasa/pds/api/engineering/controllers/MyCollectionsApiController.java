@@ -2,6 +2,7 @@ package gov.nasa.pds.api.engineering.controllers;
 
 
 import gov.nasa.pds.api.base.CollectionsApi;
+import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.model.Product;
@@ -118,8 +119,10 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyCollectionsApiController.log.info("request collection lidvid, collections children: " + lidvid);
 
-      HashSet<String> uniqueProperties = new HashSet<String>();
+    	int iteration=0;
+    	HashSet<String> uniqueProperties = new HashSet<String>();
     	List<String> plidvids = new ArrayList<String>();
+    	List<String> wlidvids = new ArrayList<String>();
     	Products products = new Products();
       	Summary summary = new Summary();
 
@@ -130,24 +133,35 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
       	summary.setSort(sort);	
     	products.setSummary(summary);
 
-    	for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
+    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", lidvid, "product_lidvid",
 						this.esRegistryConnection.getRegistryRefIndex())))
 		{
+    		wlidvids.clear();
+
 			if (kvp.get("product_lidvid") instanceof String)
-			{ plidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toString())); }
+			{ wlidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toString())); }
 			else
 			{
 				@SuppressWarnings("unchecked")
 				List<String> clids = (List<String>)kvp.get("product_lidvid");
 				for (String clid : clids)
-				{ plidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
+				{ wlidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
 			}
+			
+			if (start <= iteration || start < iteration+wlidvids.size())
+			{
+				plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size()));
+			}
+
+			if (limit <= plidvids.size()) { break; }
+			else { iteration = iteration + wlidvids.size(); }
 		}
 
-    	if (0 < plidvids.size() && start < plidvids.size())
+    	if (0 < plidvids.size())
     	{
-    		this.fillProductsFromLidvids(products, uniqueProperties, plidvids, fields, start, limit, onlySummary);
+    		this.fillProductsFromLidvids(products, uniqueProperties,
+    				plidvids.subList(0, plidvids.size() < limit ? plidvids.size() : limit), fields, onlySummary);
     	}
     	else MyCollectionsApiController.log.warn("Did not find any products for collection lidvid: " + lidvid);
 
