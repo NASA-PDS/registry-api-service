@@ -119,7 +119,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyCollectionsApiController.log.info("request collection lidvid, collections children: " + lidvid);
 
-    	int iteration=0;
+    	int iteration=0,wsize=0;
     	HashSet<String> uniqueProperties = new HashSet<String>();
     	List<String> plidvids = new ArrayList<String>();
     	List<String> wlidvids = new ArrayList<String>();
@@ -140,8 +140,9 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 		{
     		log.error("Next product_lidvid array: " + Integer.toString(iteration));
     		wlidvids.clear();
+    		wsize = 0;
 
-			if (kvp.get("product_lidvid") instanceof String)
+    		if (kvp.get("product_lidvid") instanceof String)
 			{ wlidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toString())); }
 			else
 			{
@@ -153,6 +154,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 					for (String clid : clids)
 					{ wlidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
 				}
+				else { wsize = clids.size(); }
 			}
 			
 			if (start <= iteration || start < iteration+wlidvids.size())
@@ -163,7 +165,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 			log.error("plidvids: " + Integer.toString(plidvids.size()));
 			log.error("wlidvids: " + Integer.toString(wlidvids.size()));
 			if (limit <= plidvids.size()) { break; }
-			else { iteration = iteration + wlidvids.size(); }
+			else { iteration = iteration + wlidvids.size() + wsize; }
 		}
 
     	if (0 < plidvids.size())

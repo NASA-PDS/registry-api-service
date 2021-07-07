@@ -183,7 +183,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, children of products: " + lidvid);
 
-    	int iteration=0;
+    	int iteration=0,wsize=0;
     	HashSet<String> uniqueProperties = new HashSet<String>();
     	List<String> clidvids = this.getRefLidCollection(lidvid, limit);
     	List<String> plidvids = new ArrayList<String>();   
@@ -205,6 +205,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     						this.esRegistryConnection.getRegistryRefIndex())))
     		{
     			wlidvids.clear();
+    			wsize = 0;
 
     			if (hit.get("product_lidvid") instanceof String)
     			{ wlidvids.add(this.productBO.getLatestLidVidFromLid(hit.get("product_lidvid").toString())); }
@@ -218,6 +219,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     					for (String plid : plids)
     					{ wlidvids.add(this.productBO.getLatestLidVidFromLid(plid)); }
         			}
+    				else { wsize = plids.size(); } 
     			}
 
     			if (start <= iteration || start < iteration+wlidvids.size())
@@ -226,7 +228,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     			}
 
     			if (limit <= plidvids.size()) { break; }
-    			else { iteration = iteration + wlidvids.size(); }
+    			else { iteration = iteration + wlidvids.size() + wsize; }
     		}
     	}
     	else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
