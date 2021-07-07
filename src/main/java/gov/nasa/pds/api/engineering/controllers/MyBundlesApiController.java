@@ -200,7 +200,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (0 < clidvids.size())
     	{
-    		for (Map<String,Object> hit : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
+    		for (Map<String,Object> hit : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
     				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", clidvids, "product_lidvid",
     						this.esRegistryConnection.getRegistryRefIndex())))
     		{
@@ -212,8 +212,12 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     			{
     				@SuppressWarnings("unchecked")
     				List<String> plids = (List<String>)hit.get("product_lidvid");
-    				for (String plid : plids)
-    				{ wlidvids.add(this.productBO.getLatestLidVidFromLid(plid)); }
+
+    				if (start <= iteration || start < iteration+plids.size())
+        			{
+    					for (String plid : plids)
+    					{ wlidvids.add(this.productBO.getLatestLidVidFromLid(plid)); }
+        			}
     			}
 
     			if (start <= iteration || start < iteration+wlidvids.size())

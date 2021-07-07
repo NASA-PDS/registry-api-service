@@ -134,7 +134,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     	products.setSummary(summary);
 
     	log.error("Start of get page");
-    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
+    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", lidvid, "product_lidvid",
 						this.esRegistryConnection.getRegistryRefIndex())))
 		{
@@ -147,8 +147,12 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 			{
 				@SuppressWarnings("unchecked")
 				List<String> clids = (List<String>)kvp.get("product_lidvid");
-				for (String clid : clids)
-				{ wlidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
+
+				if (start <= iteration || start < iteration+clids.size())
+				{
+					for (String clid : clids)
+					{ wlidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
+				}
 			}
 			
 			if (start <= iteration || start < iteration+wlidvids.size())
