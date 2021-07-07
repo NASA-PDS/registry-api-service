@@ -1,18 +1,12 @@
 package gov.nasa.pds.api.engineering.elasticsearch;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.http.client.utils.URIBuilder;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.search.SearchHit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,16 +142,5 @@ public class ElasticSearchUtil {
 		return addPropertiesFromESEntity(product, ep, baseURL);
 		
 				
-	}
-
-	static public List<Map<String,Object>> collate (RestHighLevelClient client, SearchRequest request) throws IOException
-	{
-    	List<Map<String,Object>> results = new ArrayList<Map<String,Object>>();
-
-    	for (SearchHit hit : client.search(request, RequestOptions.DEFAULT).getHits())
-    	{
-    		results.add(hit.getSourceAsMap());
-    	}
-    	return results;
 	}
 }

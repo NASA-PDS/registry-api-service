@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnection;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
@@ -79,12 +80,11 @@ public class MyProductsApiBareController {
     }
 
   @SuppressWarnings("unchecked")
-protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, int start, int limit, boolean onlySummary) throws IOException
+protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, int limit, boolean onlySummary) throws IOException
     {
-    	for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
+    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
-						lidvids.subList(start, start+limit < lidvids.size() ? start+limit : lidvids.size()),
-						fields, this.esRegistryConnection.getRegistryIndex())))
+						lidvids, fields, this.esRegistryConnection.getRegistryIndex())))
 		{
 			uniqueProperties.addAll(kvp.keySet());
 

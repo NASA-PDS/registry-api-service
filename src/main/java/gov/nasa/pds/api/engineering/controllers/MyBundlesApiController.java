@@ -2,8 +2,8 @@ package gov.nasa.pds.api.engineering.controllers;
 
 
 import gov.nasa.pds.api.base.BundlesApi;
+import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
-import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -72,25 +73,11 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     		return this.getBundlesCollections(lidvid, start, limit, fields, sort, onlySummary);
     		           		    }
 
- 	private List<String> getCollectionChildren (String lidvid) throws IOException
+ 	private Iterable<Map<String,Object>> getCollectionChildren (String lidvid, int limit) throws IOException
     {
-    	List<String> collectionLIDVIDs = new ArrayList<String>();
-
-    	for (Map<String,Object> bundle : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
+    	return new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromLidvid(lidvid, "ref_lid_collection",
-						this.esRegistryConnection.getRegistryIndex())))
-		{
-			if (bundle.get("ref_lid_collection") instanceof String)
-			{ collectionLIDVIDs.add(this.productBO.getLatestLidVidFromLid(bundle.get("ref_lid_collection").toString())); }
-			else
-			{
-				@SuppressWarnings("unchecked")
-				List<String> clids = (List<String>)bundle.get("ref_lid_collection");
-				for (String clid : clids)
-				{ collectionLIDVIDs.add(this.productBO.getLatestLidVidFromLid(clid)); }
-			}
-		}
-    	return collectionLIDVIDs;
+						this.esRegistryConnection.getRegistryIndex()));
     }
     
     private Products getCollectionChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
@@ -98,8 +85,9 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 		if (!lidvid.contains("::") && !lidvid.endsWith(":")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, collections children: " + lidvid);
 
+    	int iteration = 0;
     	HashSet<String> uniqueProperties = new HashSet<String>();
-    	List<String> clidvids = this.getCollectionChildren(lidvid);
+    	Iterable<Map<String,Object>> citer = this.getCollectionChildren(lidvid, limit);
     	Products products = new Products();
       	Summary summary = new Summary();
 
@@ -110,9 +98,16 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	summary.setSort(sort);
     	products.setSummary(summary);
 
-    	if (0 < clidvids.size() && start < clidvids.size())
+    	if (citer.iterator().hasNext())
     	{
-    		this.fillProductsFromLidvids(products, uniqueProperties, clidvids, fields, start, limit, onlySummary);
+    		List<String> clidvids = new ArrayList<String>();
+
+    		for (Map<String,Object> hit : citer)
+    		{
+    			if (start <= iteration && iteration < limit+start) { clidvids.add(hit.get ("ref_lid_collection").toString()); }
+				if (clidvids.size() == limit) { break; }
+    		}
+    		this.fillProductsFromLidvids(products, uniqueProperties, clidvids, fields, limit, onlySummary);
     	}
     	else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
 
@@ -173,15 +168,16 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 		 }
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
+
 	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
-	
     {
     	
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
-    	
     	MyBundlesApiController.log.info("request bundle lidvid, children of products: " + lidvid);
+
+    	int iteration = 0;
     	HashSet<String> uniqueProperties = new HashSet<String>();
-    	List<String> clidvids = this.getCollectionChildren(lidvid);
+    	Iterator<Map<String,Object>> citer = this.getCollectionChildren(lidvid, limit).iterator();
     	List<String> plidvids = new ArrayList<String>();    		
     	Products products = new Products();
       	Summary summary = new Summary();
@@ -192,22 +188,32 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	summary.setLimit(limit);
     	summary.setSort(sort);
     	products.setSummary(summary);
-    	MyBundlesApiController.log.info("found " + Integer.toString(clidvids.size()) + " collections in this bundle");
 
-    	if (0 < clidvids.size())
+    	if (citer.hasNext())
     	{
-    		for (Map<String,Object> kvp : ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(),
-    				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", clidvids, "product_lidvid",
-    						this.esRegistryConnection.getRegistryRefIndex())))
+    		while (plidvids.size() < limit && citer.hasNext())
     		{
-    			if (kvp.get("product_lidvid") instanceof String)
-    			{ plidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toString())); }
-    			else
+    			List<String> clidvids = new ArrayList<String>();
+
+    			for (int i = 0 ; i < limit && citer.hasNext() ; i++) { clidvids.add(citer.next().get("ref_lid_collection").toString()); }
+    			for (Map<String,Object> hit : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
+    					ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", clidvids, "product_lidvid",
+    							this.esRegistryConnection.getRegistryRefIndex())))
     			{
-    				@SuppressWarnings("unchecked")
-    				List<String> clids = (List<String>)kvp.get("product_lidvid");
-    				for (String clid : clids)
-    				{ plidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
+    				if (start <= iteration && iteration < limit+start)
+    				{
+    					if (hit.get("product_lidvid") instanceof String)
+    					{ plidvids.add(this.productBO.getLatestLidVidFromLid(hit.get("product_lidvid").toString())); }
+    					else
+    					{
+    						@SuppressWarnings("unchecked")
+    						List<String> clids = (List<String>)hit.get("product_lidvid");
+    						for (String clid : clids)
+    						{ plidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
+    					}
+    				}
+
+    				if (limit <= plidvids.size()) { break; }
     			}
     		}
     	}
@@ -215,9 +221,10 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	
     	MyBundlesApiController.log.info("found " + Integer.toString(plidvids.size()) + " products in this bundle");
 
-    	if (0 < plidvids.size() && start < plidvids.size())
+    	if (0 < plidvids.size())
     	{
-    		this.fillProductsFromLidvids(products, uniqueProperties, plidvids, fields, start, limit, onlySummary);
+    		this.fillProductsFromLidvids(products, uniqueProperties,
+    				plidvids.subList(0, plidvids.size() < limit ? plidvids.size() : limit), fields, limit, onlySummary);
     	}
     	else MyBundlesApiController.log.warn ("Did not find any products for bundle lidvid: " + lidvid);
 
