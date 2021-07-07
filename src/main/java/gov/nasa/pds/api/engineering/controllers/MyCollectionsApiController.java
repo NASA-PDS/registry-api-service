@@ -133,10 +133,12 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
       	summary.setSort(sort);	
     	products.setSummary(summary);
 
+    	log.error("Start of get page");
     	for (Map<String,Object> kvp : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", lidvid, "product_lidvid",
 						this.esRegistryConnection.getRegistryRefIndex())))
 		{
+    		log.error("Next product_lidvid array: " + Integer.toString(iteration));
     		wlidvids.clear();
 
 			if (kvp.get("product_lidvid") instanceof String)
@@ -154,6 +156,8 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 				plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size()));
 			}
 
+			log.error("plidvids: " + Integer.toString(plidvids.size()));
+			log.error("wlidvids: " + Integer.toString(wlidvids.size()));
 			if (limit <= plidvids.size()) { break; }
 			else { iteration = iteration + wlidvids.size(); }
 		}
