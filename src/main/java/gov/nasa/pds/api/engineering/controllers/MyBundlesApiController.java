@@ -200,7 +200,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (0 < clidvids.size())
     	{
-    		for (Map<String,Object> hit : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
+    		for (Map<String,Object> hit : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
     				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", clidvids, "product_lidvid",
     						this.esRegistryConnection.getRegistryRefIndex())))
     		{
