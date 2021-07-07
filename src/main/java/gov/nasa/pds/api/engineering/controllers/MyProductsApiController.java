@@ -162,7 +162,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 		String field = noVer ? "collection_lid" : "collection_lidvid";
 
 		fields.add(field);
-    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
+    	for (final Map<String,Object> kvp : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
     			ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("product_lidvid",
     					lidvid, fields, this.esRegistryConnection.getRegistryRefIndex(), false)))
     	{

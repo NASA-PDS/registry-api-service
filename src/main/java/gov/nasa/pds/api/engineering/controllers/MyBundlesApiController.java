@@ -77,7 +77,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     {
  		List<String> reflids = new ArrayList<String>();
 
- 		for (Map<String, Object> bundle : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
+ 		for (final Map<String, Object> bundle : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromLidvid(lidvid, "ref_lid_collection",
 						this.esRegistryConnection.getRegistryIndex())))
  		{
@@ -179,7 +179,6 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
 	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
     {
-    	
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, children of products: " + lidvid);
 
@@ -200,7 +199,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (0 < clidvids.size())
     	{
-    		for (Map<String,Object> hit : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
+    		for (final Map<String,Object> hit : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
     				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", clidvids, "product_lidvid",
     						this.esRegistryConnection.getRegistryRefIndex())))
     		{

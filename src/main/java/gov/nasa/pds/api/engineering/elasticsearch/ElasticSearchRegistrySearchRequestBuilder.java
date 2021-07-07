@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.lang.Math;
 
@@ -313,12 +314,12 @@ public class ElasticSearchRegistrySearchRequestBuilder {
     			.source(new SearchSourceBuilder().query(find_kvps)
     					.fetchSource(fields == null ? DEFAULT_ALL_FIELDS : aFields, DEFAULT_BLOB));
 
-    	for (String key : kvps.keySet())
+    	for (Entry<String,List<String>> key : kvps.entrySet())
     	{
-    		for (String value : kvps.get(key))
+    		for (String value : key.getValue())
     		{
-    			if (term) find_kvps.should (QueryBuilders.termQuery (key, value));
-    			else find_kvps.should (QueryBuilders.matchQuery (key, value));
+    			if (term) find_kvps.should (QueryBuilders.termQuery (key.getKey(), value));
+    			else find_kvps.should (QueryBuilders.matchQuery (key.getKey(), value));
     		}
     	}
     	return request;

@@ -134,7 +134,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
     	products.setSummary(summary);
 
     	log.error("Start of get page");
-    	for (Map<String,Object> kvp : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
+    	for (final Map<String,Object> kvp : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", lidvid, "product_lidvid",
 						this.esRegistryConnection.getRegistryRefIndex())))
 		{

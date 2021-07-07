@@ -46,7 +46,7 @@ public class ElasticSearchHitIterator implements Iterable<Map<String,Object>>,It
 	}
 
 	@Override
-	public boolean hasNext() { return (this.at + this.page * this.size) < this.currentBatch.getTotalHits().value; }
+	public boolean hasNext() { return this.currentBatch == null ? false : (this.at + this.page * this.size) < this.currentBatch.getTotalHits().value; }
 
 	@Override
 	public Iterator<Map<String,Object>> iterator() { return this; }
