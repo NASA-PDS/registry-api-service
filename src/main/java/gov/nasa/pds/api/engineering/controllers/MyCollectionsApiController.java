@@ -115,7 +115,6 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 	
     
 	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException {
-		log.error("timing - step A");
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyCollectionsApiController.log.info("request collection lidvid, collections children: " + lidvid);
 
@@ -133,27 +132,23 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
       	summary.setSort(sort);	
     	products.setSummary(summary);
 
-		log.error("timing - step B");
     	for (final Map<String,Object> kvp : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", lidvid, "product_lidvid",
 						this.esRegistryConnection.getRegistryRefIndex())))
 		{
-    		log.error("timing - step C");
     		wlidvids.clear();
     		wsize = 0;
 
     		if (kvp.get("product_lidvid") instanceof String)
-			{ 		log.error("timing - step D");
-wlidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toString())); }
+			{ wlidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toString())); }
 			else
 			{
-				log.error("timing - step E");
 				@SuppressWarnings("unchecked")
 				List<String> clids = (List<String>)kvp.get("product_lidvid");
 
 				if (start <= iteration || start < iteration+clids.size())
 				{
-					log.error("timing - step F");
+					// FIXME Al: option 1
 					//for (String clid : clids)
 					//{ wlidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
 					wlidvids.addAll(clids);
@@ -161,19 +156,13 @@ wlidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toS
 				else { wsize = clids.size(); }
 			}
 
-    		log.error("timing - step G");
 			if (start <= iteration || start < iteration+wlidvids.size())
-			{
-				log.error("timing - step H");
-				plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size()));
-			}
+			{ plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size())); }
 
-			log.error("timing - step I");
 			if (limit <= plidvids.size()) { break; }
 			else { iteration = iteration + wlidvids.size() + wsize; }
 		}
 
-		log.error("timing - step J");
     	if (0 < plidvids.size())
     	{
     		this.fillProductsFromLidvids(products, uniqueProperties,
@@ -181,9 +170,7 @@ wlidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toS
     	}
     	else MyCollectionsApiController.log.warn("Did not find any products for collection lidvid: " + lidvid);
 
-		log.error("timing - step K");
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
-		log.error("timing - step L");
     	return products;    	
     }
 

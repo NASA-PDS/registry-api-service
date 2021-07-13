@@ -9,7 +9,7 @@ import requests
 TEST_N_CRITERIA=[
     ('http://localhost:8080/bundles/urn:nasa:pds:izenberg_pdart14_meap::1.0/collections',200,4),  #57
     ('http://localhost:8080/bundles/urn:nasa:pds:izenberg_pdart13_meap::1.0/collections',200,0),
-    ('http://localhost:8080//bundles/urn:nasa:pds:izenberg_pdart14_meap::1.0/products',200,10),  #59
+    ('http://localhost:8080//bundles/urn:nasa:pds:izenberg_pdart14_meap::1.0/products',200,12),  #59
     ('http://localhost:8080//bundles/urn:nasa:pds:izenberg_pdart13_meap::1.0/products',200,0),
     ('http://localhost:8080/collections/urn:nasa:pds:izenberg_pdart14_meap:data_eetable::1.0/bundles',200,1),  #62
     ('http://localhost:8080/collections/urn:nasa:pds:izenberg_pdart13_meap:data_eetable::1.0/bundles',200,0),

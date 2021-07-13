@@ -215,16 +215,16 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     				if (start <= iteration || start < iteration+plids.size())
         			{
-    					for (String plid : plids)
-    					{ wlidvids.add(this.productBO.getLatestLidVidFromLid(plid)); }
+    					// FIXME Al: option 1
+    					// for (String plid : plids)
+    					// { wlidvids.add(this.productBO.getLatestLidVidFromLid(plid)); }
+    					wlidvids.addAll(plids);
         			}
     				else { wsize = plids.size(); } 
     			}
 
     			if (start <= iteration || start < iteration+wlidvids.size())
-    			{
-    				plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size()));
-    			}
+    			{ plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size())); }
 
     			if (limit <= plidvids.size()) { break; }
     			else { iteration = iteration + wlidvids.size() + wsize; }

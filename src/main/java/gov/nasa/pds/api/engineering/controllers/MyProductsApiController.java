@@ -197,7 +197,9 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	products.setSummary(summary);
     	
     	if (0 < collectionLidvids.size())
-    	{ this.fillProductsFromLidvids(products, uniqueProperties, collectionLidvids.subList(start, start+limit), fields, summaryOnly); }
+    	{ this.fillProductsFromLidvids(products, uniqueProperties,
+    			collectionLidvids.subList(start, collectionLidvids.size() < start+limit ? collectionLidvids.size() : +limit), fields,
+    			summaryOnly); }
     	else MyProductsApiController.log.warn("Did not find a product with lidvid: " + lidvid);
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
