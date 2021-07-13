@@ -154,8 +154,9 @@ wlidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toS
 				if (start <= iteration || start < iteration+clids.size())
 				{
 					log.error("timing - step F");
-					for (String clid : clids)
-					{ wlidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
+					//for (String clid : clids)
+					//{ wlidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
+					wlidvids.addAll(clids);
 				}
 				else { wsize = clids.size(); }
 			}
