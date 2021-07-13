@@ -9,7 +9,7 @@ import requests
 TEST_N_CRITERIA=[
     ('http://localhost:8080/bundles/urn:nasa:pds:izenberg_pdart14_meap::1.0/collections',200,4),  #57
     ('http://localhost:8080/bundles/urn:nasa:pds:izenberg_pdart13_meap::1.0/collections',200,0),
-    ('http://localhost:8080//bundles/urn:nasa:pds:izenberg_pdart14_meap::1.0/products',200,12),  #59
+    ('http://localhost:8080//bundles/urn:nasa:pds:izenberg_pdart14_meap::1.0/products',200,10),  #59
     ('http://localhost:8080//bundles/urn:nasa:pds:izenberg_pdart13_meap::1.0/products',200,0),
     ('http://localhost:8080/collections/urn:nasa:pds:izenberg_pdart14_meap:data_eetable::1.0/bundles',200,1),  #62
     ('http://localhost:8080/collections/urn:nasa:pds:izenberg_pdart13_meap:data_eetable::1.0/bundles',200,0),
@@ -28,6 +28,6 @@ for url,expectation,length in TEST_N_CRITERIA:
         this_length = len (result.json()['data']) if 'data' in result.json() else 0
         if this_length == length:
             print ('success', result.status_code, url)
-        else: print ('failed', length, '!=', this_length)
+        else: print ('failed', length, '!=', this_length, url)
     else: print ('failed', expectation, '!=', result.status_code, url)
     pass
