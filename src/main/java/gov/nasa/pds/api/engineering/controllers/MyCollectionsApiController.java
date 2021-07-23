@@ -120,8 +120,8 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 
     	int iteration=0,wsize=0;
     	HashSet<String> uniqueProperties = new HashSet<String>();
-    	List<String> plidvids = new ArrayList<String>();
-    	List<String> wlidvids = new ArrayList<String>();
+    	List<String> productLidvids = new ArrayList<String>();
+    	List<String> pageOfLidvids = new ArrayList<String>();
     	Products products = new Products();
       	Summary summary = new Summary();
 
@@ -136,37 +136,31 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", lidvid, "product_lidvid",
 						this.esRegistryConnection.getRegistryRefIndex())))
 		{
-    		wlidvids.clear();
+    		pageOfLidvids.clear();
     		wsize = 0;
 
     		if (kvp.get("product_lidvid") instanceof String)
-			{ wlidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toString())); }
+			{ pageOfLidvids.add(this.productBO.getLatestLidVidFromLid(kvp.get("product_lidvid").toString())); }
 			else
 			{
 				@SuppressWarnings("unchecked")
 				List<String> clids = (List<String>)kvp.get("product_lidvid");
 
-				if (start <= iteration || start < iteration+clids.size())
-				{
-					// FIXME Al: option 1
-					//for (String clid : clids)
-					//{ wlidvids.add(this.productBO.getLatestLidVidFromLid(clid)); }
-					wlidvids.addAll(clids);
-				}
+				if (start <= iteration || start < iteration+clids.size()) {pageOfLidvids.addAll(clids); }
 				else { wsize = clids.size(); }
 			}
 
-			if (start <= iteration || start < iteration+wlidvids.size())
-			{ plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size())); }
+			if (start <= iteration || start < iteration+pageOfLidvids.size())
+			{ productLidvids.addAll(pageOfLidvids.subList(start <= iteration ? 0 : start-iteration, pageOfLidvids.size())); }
 
-			if (limit <= plidvids.size()) { break; }
-			else { iteration = iteration + wlidvids.size() + wsize; }
+			if (limit <= productLidvids.size()) { break; }
+			else { iteration = iteration + pageOfLidvids.size() + wsize; }
 		}
 
-    	if (0 < plidvids.size())
+    	if (0 < productLidvids.size())
     	{
     		this.fillProductsFromLidvids(products, uniqueProperties,
-    				plidvids.subList(0, plidvids.size() < limit ? plidvids.size() : limit), fields, onlySummary);
+    				productLidvids.subList(0, productLidvids.size() < limit ? productLidvids.size() : limit), fields, onlySummary);
     	}
     	else MyCollectionsApiController.log.warn("Did not find any products for collection lidvid: " + lidvid);
 

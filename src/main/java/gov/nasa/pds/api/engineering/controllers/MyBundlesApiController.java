@@ -213,13 +213,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     				@SuppressWarnings("unchecked")
     				List<String> plids = (List<String>)hit.get("product_lidvid");
 
-    				if (start <= iteration || start < iteration+plids.size())
-        			{
-    					// FIXME Al: option 1
-    					// for (String plid : plids)
-    					// { wlidvids.add(this.productBO.getLatestLidVidFromLid(plid)); }
-    					wlidvids.addAll(plids);
-        			}
+    				if (start <= iteration || start < iteration+plids.size()) { wlidvids.addAll(plids); }
     				else { wsize = plids.size(); } 
     			}
 
