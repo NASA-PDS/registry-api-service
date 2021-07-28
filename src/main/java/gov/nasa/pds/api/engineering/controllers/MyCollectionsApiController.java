@@ -146,14 +146,19 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
 				@SuppressWarnings("unchecked")
 				List<String> clids = (List<String>)kvp.get("product_lidvid");
 
+				// if we are working with data that we care about (between start and start + limit) then record them
 				if (start <= iteration || start < iteration+clids.size()) {pageOfLidvids.addAll(clids); }
+				// else just modify the counter to skip them without wasting CPU cycles processing them
 				else { wsize = clids.size(); }
 			}
 
+    		// if any data from the pages then add them to the complete roster
 			if (start <= iteration || start < iteration+pageOfLidvids.size())
 			{ productLidvids.addAll(pageOfLidvids.subList(start <= iteration ? 0 : start-iteration, pageOfLidvids.size())); }
 
+			// if the limit of data has been found then break out of the loop
 			if (limit <= productLidvids.size()) { break; }
+			// otherwise update all of hte indices for the next iteration
 			else { iteration = iteration + pageOfLidvids.size() + wsize; }
 		}
 
