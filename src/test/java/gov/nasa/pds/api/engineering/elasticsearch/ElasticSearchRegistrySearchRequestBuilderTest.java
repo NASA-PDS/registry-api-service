@@ -1,5 +1,6 @@
 package gov.nasa.pds.api.engineering.elasticsearch;
 
+import gov.nasa.pds.api.engineering.controllers.ProductsRequest;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 
 import java.io.FileWriter;
@@ -106,11 +107,11 @@ class ElasticSearchRegistrySearchRequestBuilderTest {
 			FileWriter myWriter = new FileWriter("unittests.txt");
 			for (Entry<String, String> queryEntry : this.queryMap.entrySet()) {
 				
-				queryString = queryEntry.getKey();
-				List<String> fields = new ArrayList<String>(Arrays.asList("title","ops:Label_File_Info.ops:md5_checksum"));
-				searchRequest = this.requestBuilder.getSearchCollectionRequest(
-						queryString,
-						fields, 0, 10);
+			    ProductsRequest req = new ProductsRequest();
+			    req.q = queryEntry.getKey();
+				req.fields = new ArrayList<String>(Arrays.asList("title","ops:Label_File_Info.ops:md5_checksum"));
+				req.setPageInfo(0, 10);
+				searchRequest = this.requestBuilder.getSearchCollectionRequest(req);
 				
 				/* Write test input in a file */
 				String escapedQueryString;
