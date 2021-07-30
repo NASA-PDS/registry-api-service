@@ -73,7 +73,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     		return this.getBundlesCollections(lidvid, start, limit, fields, sort, onlySummary);
     		           		    }
 
- 	private List<String> getRefLidCollection (String lidvid, int limit) throws IOException
+ 	private List<String> getRefLidCollection (String lidvid) throws IOException
     {
  		List<String> reflids = new ArrayList<String>();
 
@@ -100,7 +100,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	MyBundlesApiController.log.info("request bundle lidvid, collections children: " + lidvid);
 
     	HashSet<String> uniqueProperties = new HashSet<String>();
-    	List<String> clidvids = this.getRefLidCollection(lidvid, limit);
+    	List<String> clidvids = this.getRefLidCollection(lidvid);
     	Products products = new Products();
       	Summary summary = new Summary();
 
@@ -184,7 +184,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	int iteration=0,wsize=0;
     	HashSet<String> uniqueProperties = new HashSet<String>();
-    	List<String> clidvids = this.getRefLidCollection(lidvid, limit);
+    	List<String> clidvids = this.getRefLidCollection(lidvid);
     	List<String> plidvids = new ArrayList<String>();   
     	List<String> wlidvids = new ArrayList<String>();
     	Products products = new Products();

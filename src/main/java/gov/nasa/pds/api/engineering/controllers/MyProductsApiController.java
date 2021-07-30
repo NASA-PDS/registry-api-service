@@ -99,7 +99,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
        	MyProductsApiController.log.info("find all bundles containing the product lidvid: " + lidvid);
 
        	HashSet<String> uniqueProperties = new HashSet<String>();
-       	List<String> collectionLIDs = this.getCollectionLidvids(lidvid, limit, true);
+       	List<String> collectionLIDs = this.getCollectionLidvids(lidvid, true);
     	Products products = new Products();
     	Summary summary = new Summary();
 
@@ -156,7 +156,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
 
-	private List<String> getCollectionLidvids (String lidvid, int limit, boolean noVer) throws IOException
+	private List<String> getCollectionLidvids (String lidvid, boolean noVer) throws IOException
 	{
 		List<String> fields = new ArrayList<String>(), lidvids = new ArrayList<String>();
 		String field = noVer ? "collection_lid" : "collection_lidvid";
@@ -185,7 +185,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
        	MyProductsApiController.log.info("find all bundles containing the product lidvid: " + lidvid);
 
        	HashSet<String> uniqueProperties = new HashSet<String>();
-       	List<String> collectionLidvids = this.getCollectionLidvids(lidvid, limit, false);
+       	List<String> collectionLidvids = this.getCollectionLidvids(lidvid, false);
     	Products products = new Products();
       	Summary summary = new Summary();
 
