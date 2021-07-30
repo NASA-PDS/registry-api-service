@@ -132,7 +132,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
       	summary.setSort(sort);	
     	products.setSummary(summary);
 
-    	for (final Map<String,Object> kvp : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
+    	for (final Map<String,Object> kvp : new ElasticSearchHitIterator(this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", lidvid, "product_lidvid",
 						this.esRegistryConnection.getRegistryRefIndex())))
 		{

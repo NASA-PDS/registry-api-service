@@ -77,7 +77,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     {
  		List<String> reflids = new ArrayList<String>();
 
- 		for (final Map<String, Object> bundle : new ElasticSearchHitIterator(limit, this.esRegistryConnection.getRestHighLevelClient(),
+ 		for (final Map<String, Object> bundle : new ElasticSearchHitIterator(this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromLidvid(lidvid, "ref_lid_collection",
 						this.esRegistryConnection.getRegistryIndex())))
  		{
@@ -199,7 +199,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (0 < clidvids.size())
     	{
-    		for (final Map<String,Object> hit : new ElasticSearchHitIterator(10, this.esRegistryConnection.getRestHighLevelClient(),
+    		for (final Map<String,Object> hit : new ElasticSearchHitIterator(this.esRegistryConnection.getRestHighLevelClient(),
     				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromKVP("collection_lidvid", clidvids, "product_lidvid",
     						this.esRegistryConnection.getRegistryRefIndex())))
     		{
