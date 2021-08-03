@@ -22,6 +22,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
@@ -46,6 +47,12 @@ public class ElasticSearchRegistrySearchRequestBuilder
     private String registryRefIndex;
     private int timeOutSeconds;
 
+    /**
+     * Constructor
+     * @param registryIndex Elasticsearch main metadata index, e.g., "registry"
+     * @param registryRefindex Elasticsearch references index, e.g., "registry-refs"
+     * @param timeOutSeconds timeout
+     */
     public ElasticSearchRegistrySearchRequestBuilder(String registryIndex, String registryRefindex, int timeOutSeconds)
     {
 
@@ -55,6 +62,9 @@ public class ElasticSearchRegistrySearchRequestBuilder
 
     }
 
+    /**
+     * Constructor
+     */
     public ElasticSearchRegistrySearchRequestBuilder()
     {
 
@@ -136,9 +146,6 @@ public class ElasticSearchRegistrySearchRequestBuilder
         return fieldsBoolQuery;
     }
 
-//	public SearchRequest getSearchProductsRequest(String queryString, int start, int limit, Map<String,String> presetCriteria) {
-//		return getSearchProductsRequest(queryString, null, start, limit, presetCriteria);
-//	}
 
     public GetRequest getGetProductRequest(String lidvid, boolean withXMLBlob)
     {
@@ -165,6 +172,66 @@ public class ElasticSearchRegistrySearchRequestBuilder
 
     public SearchRequest getSearchProductsRequest(ProductsRequest req, Map<String, String> presetCriteria)
     {
+        QueryBuilder query = null;
+        
+        // "keyword" parameter provided. Run full-text query.
+        if(req.keyword != null && !req.keyword.isBlank())
+        {
+            query = createKeywordQuery(req, presetCriteria);
+        }
+        // Run PDS query language ("q" parameter) query
+        else
+        {
+            query = createPqlQuery(req, presetCriteria);
+        }
+        
+        String[] includedFields = createIncludedFields(req.fields);
+        
+        SearchRequest searchRequest = createSearchRequest(query, req.start, req.limit, includedFields);
+
+        return searchRequest;
+    }
+
+    
+    /**
+     * Create full-text / keyword query (Uses Lucene query language for now)
+     * @param req request parameters
+     * @param presetCriteria preset criteria
+     * @return a query
+     */
+    private QueryBuilder createKeywordQuery(ProductsRequest req, Map<String, String> presetCriteria)
+    {
+        // Lucene query
+        QueryStringQueryBuilder luceneQuery = QueryBuilders.queryStringQuery(req.keyword);
+        // Search in following fields only
+        luceneQuery.field("title");
+        luceneQuery.field("description");
+        
+        // Boolean (root) query
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.must(luceneQuery);
+        
+        // Preset criteria filter
+        if(presetCriteria != null)
+        {
+            presetCriteria.forEach((key, value) -> 
+            {
+                boolQuery.filter(QueryBuilders.termQuery(key, value));
+            });
+        }
+        
+        return boolQuery;
+    }
+
+    
+    /**
+     * Create PDS query language query
+     * @param req request parameters
+     * @param presetCriteria preset criteria
+     * @return a query
+     */
+    private QueryBuilder createPqlQuery(ProductsRequest req, Map<String, String> presetCriteria)
+    {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 
         if (req.q != null)
@@ -179,16 +246,12 @@ public class ElasticSearchRegistrySearchRequestBuilder
             boolQuery.must(QueryBuilders.termQuery(e.getKey(), e.getValue()));
         }
 
-        String[] includedFields = null;
         if (req.fields != null)
         {
             boolQuery.must(this.parseFields(req.fields));
-            includedFields = createIncludedFields(req.fields);
         }
-
-        SearchRequest searchRequest = createSearchRequest(boolQuery, req.start, req.limit, includedFields);
-
-        return searchRequest;
+        
+        return boolQuery;
     }
 
     
@@ -199,18 +262,14 @@ public class ElasticSearchRegistrySearchRequestBuilder
         searchSourceBuilder.from(from);
         searchSourceBuilder.size(size);
 
-        FetchSourceContext fetchSourceContext = new FetchSourceContext(true, includedFields, new String[]
-        {
-                EntitytProductWithBlob.BLOB_PROPERTY
-        });
-
+        String[] excludeFields = { EntitytProductWithBlob.BLOB_PROPERTY };
+        FetchSourceContext fetchSourceContext = new FetchSourceContext(true, includedFields, excludeFields);
         searchSourceBuilder.fetchSource(fetchSourceContext);
 
         searchSourceBuilder.timeout(new TimeValue(this.timeOutSeconds, TimeUnit.SECONDS));
 
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.source(searchSourceBuilder);
-
         searchRequest.indices(this.registryIndex);
 
         ElasticSearchRegistrySearchRequestBuilder.log.debug("request elasticSearch :" + searchRequest.toString());
@@ -221,6 +280,8 @@ public class ElasticSearchRegistrySearchRequestBuilder
     
     private String[] createIncludedFields(List<String> fields)
     {
+        if(fields == null || fields.isEmpty()) return null;
+        
         HashSet<String> esFields = new HashSet<String>(Arrays.asList(EntityProduct.JSON_PROPERTIES));
         for (int i = 0; i < fields.size(); i++)
         {

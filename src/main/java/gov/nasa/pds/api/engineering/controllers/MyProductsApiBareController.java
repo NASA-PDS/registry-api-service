@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -96,7 +95,7 @@ public class MyProductsApiBareController
                         this.contextPath);
             }
 
-            MyProductsApiBareController.log.info("baseUrl is " + baseURL.toString());
+            MyProductsApiBareController.log.debug("baseUrl is " + baseURL.toString());
             return baseURL;
 
         }
@@ -171,7 +170,7 @@ public class MyProductsApiBareController
     protected ResponseEntity<Products> getProductsResponseEntity(ProductsRequest req)
     {
         String accept = this.request.getHeader("Accept");
-        log.info("accept value is " + accept);
+        log.debug("accept value is " + accept);
         if ((accept != null && (accept.contains("application/json") || accept.contains("text/html")
                 || accept.contains("application/xml") || accept.contains("*/*"))) || (accept == null))
         {
