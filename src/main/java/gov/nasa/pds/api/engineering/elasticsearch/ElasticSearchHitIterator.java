@@ -12,7 +12,7 @@ import org.elasticsearch.search.SearchHits;
 
 public class ElasticSearchHitIterator implements Iterable<Map<String,Object>>,Iterator<Map<String,Object>>
 {
-	final private int size=10; // define size to use here to prevent page skipping if elasticsearch default size ever changes
+	private int size=10; // define size to use here to prevent page skipping if elasticsearch default size ever changes
 	private int at=0, page=0;
 	private SearchHits currentBatch;
 	private RestHighLevelClient client;
@@ -23,6 +23,15 @@ public class ElasticSearchHitIterator implements Iterable<Map<String,Object>>,It
 		super();
 		this.client = client;
 		this.request = request;
+		this.currentBatch = this.fetch();
+	}
+
+	public ElasticSearchHitIterator (int size, RestHighLevelClient client, SearchRequest request) throws IOException
+	{
+		super();
+		this.client = client;
+		this.request = request;
+		this.size = size;
 		this.currentBatch = this.fetch();
 	}
 
