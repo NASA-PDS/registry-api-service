@@ -46,6 +46,7 @@ public class WebMVCConfig implements WebMvcConfigurer {
 	/**
 	 * Setup a simple strategy: use all the defaults and return XML by default when not sure. 
 	 */
+	@Override
 	@SuppressWarnings("deprecation")
 	public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
 		configurer.defaultContentType(MediaType.APPLICATION_JSON);
