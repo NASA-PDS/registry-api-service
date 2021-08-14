@@ -58,11 +58,13 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     }
     
      
-    public ResponseEntity<Product> productsByLidvid(@ApiParam(value = "lidvid (urn)",required=true) @PathVariable("lidvid") String lidvid) {
-    	return this.getProductResponseEntity(lidvid);
+    public ResponseEntity<Object> productsByLidvid(
+            @ApiParam(value = "lidvid (urn)", required = true) @PathVariable("lidvid") String lidvid)
+    {
+        return this.getProductResponseEntity(lidvid);
     }
 
-
+    
 	@Override
 	public ResponseEntity<Products> bundlesContainingProduct(String lidvid, @Valid Integer start, @Valid Integer limit,
 			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) {

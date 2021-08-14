@@ -36,7 +36,7 @@ import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 
 import gov.nasa.pds.api.model.xml.ProductWithXmlLabel;
 import gov.nasa.pds.api.model.xml.XMLMashallableProperyValue;
-
+import gov.nasa.pds.model.Pds4Product;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.PropertyArrayValues;
 import gov.nasa.pds.model.Products;
@@ -208,40 +208,54 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
     }
     
     
-    protected ResponseEntity<Product> getProductResponseEntity(String lidvid){
+    protected ResponseEntity<Object> getProductResponseEntity(String lidvid){
     	String accept = request.getHeader("Accept");
         if ((accept != null) 
         		&& (accept.contains("application/json")
 				|| accept.contains("text/html")
 				|| accept.contains("*/*")
 				|| accept.contains("application/xml")
-				|| accept.contains("application/pds4+xml"))) {
+				|| accept.contains("application/pds4+xml")
+				|| accept.contains("application/pds4+json"))) {
         	
             try {
             	
             	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
             	
-               	ProductWithXmlLabel product = this.productBO.getProductWithXml(lidvid, this.getBaseURL());
+            	Object product = null;
+            	
+            	if(accept.contains("application/pds4+json"))
+            	{
+            	    ProductWithXmlLabel p1 = this.productBO.getProductWithXml(lidvid, this.getBaseURL());
+            	    Pds4Product p2 = new Pds4Product();
+            	    p2.setId(p1.getId());
+            	    p2.setMetadata(p1.getMetadata());
+            	    product = p2;
+            	}
+            	else
+            	{
+            	    product = this.productBO.getProductWithXml(lidvid, this.getBaseURL());
+            	}
             	
                	if (product != null) {	
-                   	
-	        		return new ResponseEntity<Product>(product, HttpStatus.OK);
+	        		return new ResponseEntity<Object>(product, HttpStatus.OK);
 	        	}		        	
 	        	else {
 	        		// TODO send 302 redirection to a different server if one exists
-	        		return new ResponseEntity<Product>(HttpStatus.NOT_FOUND);
+	        		return new ResponseEntity<Object>(HttpStatus.NOT_FOUND);
 	        	}
 	        		
 
             } catch (IOException e) {
                 log.error("Couldn't get or serialize response for content type " + accept, e);
-                return new ResponseEntity<Product>(HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<Object>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 
-        return new ResponseEntity<Product>(HttpStatus.NOT_IMPLEMENTED);
+        return new ResponseEntity<Object>(HttpStatus.NOT_IMPLEMENTED);
     }
-    	
+
+    
     private boolean proxyRunsOnDefaultPort() {
     	return (((this.context.getScheme() == "https")  && (this.context.getServerPort() == 443)) 
     			|| ((this.context.getScheme() == "http")  && (this.context.getServerPort() == 80)));

@@ -4,7 +4,6 @@ package gov.nasa.pds.api.engineering.controllers;
 import gov.nasa.pds.api.base.BundlesApi;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
-import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
 
@@ -45,7 +44,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     }
 
     @Override
-    public ResponseEntity<Product> bundleByLidvid(@ApiParam(value = "lidvid (urn)",required=true) @PathVariable("lidvid") String lidvid)
+    public ResponseEntity<Object> bundleByLidvid(@ApiParam(value = "lidvid (urn)",required=true) @PathVariable("lidvid") String lidvid)
     {
     	return this.getProductResponseEntity(lidvid);
     }
