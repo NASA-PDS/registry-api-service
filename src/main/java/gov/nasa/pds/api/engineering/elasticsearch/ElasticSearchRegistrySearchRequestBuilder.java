@@ -45,6 +45,12 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 	private static final String[] DEFAULT_ALL_FIELDS = { "*" };
 	private static final String[] DEFAULT_BLOB = { "ops:Label_File_Info/ops:blob" };
 	
+	private static final String[] PDS4_JSON_PRODUCT_FIELDS = { 
+        "ops:Label_File_Info/ops:json_blob" 
+	};
+	
+	
+	
 	private String registryIndex;
 	private String registryRefIndex;
 	private int timeOutSeconds;
@@ -161,7 +167,17 @@ public class ElasticSearchRegistrySearchRequestBuilder {
     	return getProductRequest;
     	
 	}
+
 	
+    public GetRequest getPds4JsonProductRequest(String lidvid, boolean withXMLBlob)
+    {
+        GetRequest getProductRequest = new GetRequest(this.registryIndex, lidvid);
+        FetchSourceContext fetchSourceContext = new FetchSourceContext(true, PDS4_JSON_PRODUCT_FIELDS, null);
+        getProductRequest.fetchSourceContext(fetchSourceContext);
+        return getProductRequest;
+    }
+
+    
 	public GetRequest getGetProductRequest(String lidvid) {
 	   	
 		return this.getGetProductRequest(lidvid, false);

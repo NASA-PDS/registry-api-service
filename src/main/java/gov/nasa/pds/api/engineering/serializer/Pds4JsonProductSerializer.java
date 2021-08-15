@@ -13,7 +13,6 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import gov.nasa.pds.model.Pds4Product;
 

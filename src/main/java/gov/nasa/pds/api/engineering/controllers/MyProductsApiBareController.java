@@ -224,13 +224,9 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
             	
             	Object product = null;
             	
-            	if(accept.contains("application/pds4+json"))
+            	if("application/pds4+json".equals(accept))
             	{
-            	    ProductWithXmlLabel p1 = this.productBO.getProductWithXml(lidvid, this.getBaseURL());
-            	    Pds4Product p2 = new Pds4Product();
-            	    p2.setId(p1.getId());
-            	    p2.setMetadata(p1.getMetadata());
-            	    product = p2;
+            	    product = this.productBO.getPds4JsonProduct(lidvid);
             	}
             	else
             	{
