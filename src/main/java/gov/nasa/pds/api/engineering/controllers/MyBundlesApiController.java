@@ -98,6 +98,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     
     private Products getCollectionChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
     {
+    	long begin = System.currentTimeMillis();
 		if (!lidvid.contains("::") && !lidvid.endsWith(":")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, collections children: " + lidvid);
 
@@ -108,9 +109,11 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (sort == null) { sort = Arrays.asList(); }
 
-    	summary.setStart(start);
+    	summary.setHits(clidvids.size());
     	summary.setLimit(limit);
     	summary.setSort(sort);
+    	summary.setStart(start);
+    	summary.setTook(-1);
     	products.setSummary(summary);
 
     	if (0 < clidvids.size())
@@ -122,6 +125,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
+    	summary.setTook((int)(System.currentTimeMillis() - begin));
     	return products;	
     }
 
@@ -181,6 +185,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
 	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
     {
+		long begin = System.currentTimeMillis();
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, children of products: " + lidvid);
 
@@ -194,9 +199,11 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (sort == null) { sort = Arrays.asList(); }
 
-    	summary.setStart(start);
+    	summary.setHits(-1);
     	summary.setLimit(limit);
     	summary.setSort(sort);
+    	summary.setStart(start);
+    	summary.setTook(-1);
     	products.setSummary(summary);
 
     	if (0 < clidvids.size())
@@ -222,8 +229,9 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     			if (start <= iteration || start < iteration+wlidvids.size())
     			{ plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size())); }
 
-    			if (limit <= plidvids.size()) { break; }
-    			else { iteration = iteration + wlidvids.size() + wsize; }
+    			//if (limit <= plidvids.size()) { break; }
+    			//else { iteration = iteration + wlidvids.size() + wsize; }
+    			iteration = iteration + wlidvids.size() + wsize;
     		}
     	}
     	else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
@@ -237,7 +245,9 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	}
     	else MyBundlesApiController.log.warn ("Did not find any products for bundle lidvid: " + lidvid);
 
+    	summary.setHits(iteration);
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
+    	summary.setTook((int)(System.currentTimeMillis() - begin));
     	return products;	
     }
 }
