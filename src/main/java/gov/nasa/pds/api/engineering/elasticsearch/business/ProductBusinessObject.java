@@ -30,6 +30,7 @@ import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;
 import gov.nasa.pds.api.engineering.exceptions.UnsupportedElasticSearchProperty;
 import gov.nasa.pds.api.model.xml.ProductWithXmlLabel;
+import gov.nasa.pds.model.Pds4Metadata;
 import gov.nasa.pds.model.Pds4Product;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.PropertyArrayValues;
@@ -41,6 +42,9 @@ public class ProductBusinessObject {
     private static final Logger log = LoggerFactory.getLogger(ProductBusinessObject.class);
 	
     private static final String DEFAULT_NULL_VALUE = null; 
+    
+    private static final String FIELD_JSON_BLOB = "ops:Label_File_Info/ops:json_blob";
+    
     
 	private ElasticSearchRegistryConnection elasticSearchConnection;
 	private ElasticSearchRegistrySearchRequestBuilder searchRequestBuilder;
@@ -284,6 +288,35 @@ public class ProductBusinessObject {
        {
            Pds4Product prod = new Pds4Product();
            prod.setId(lidvid);
+           
+           GetRequest req = this.searchRequestBuilder.getPds4JsonProductRequest(lidvid);
+           RestHighLevelClient client = this.elasticSearchConnection.getRestHighLevelClient();           
+           GetResponse resp = client.get(req, RequestOptions.DEFAULT);
+           
+           if(!resp.isExists())
+           {
+               return null;
+           }
+
+           Map<String, Object> srcFields = resp.getSourceAsMap();
+
+           // JSON BLOB
+           Object obj = srcFields.get(FIELD_JSON_BLOB);
+           if(obj != null)
+           {
+               prod.setPds4(obj);
+           }
+           
+           // File Metadata
+           Pds4Metadata meta = new Pds4Metadata();
+           /*
+           "ops:Data_File_Info/ops:file_name",
+           "ops:Data_File_Info/ops:creation_date_time",
+           "ops:Data_File_Info/ops:file_ref",
+           "ops:Data_File_Info/ops:file_size",
+           "ops:Data_File_Info/ops:md5_checksum",
+           "ops:Data_File_Info/ops:mime_type"
+           */
            
            return prod;
        }
