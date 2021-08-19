@@ -31,12 +31,11 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnection;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
+import gov.nasa.pds.api.engineering.elasticsearch.business.Pds4JsonProductBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 
-import gov.nasa.pds.api.model.xml.ProductWithXmlLabel;
 import gov.nasa.pds.api.model.xml.XMLMashallableProperyValue;
-import gov.nasa.pds.model.Pds4Product;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.PropertyArrayValues;
 import gov.nasa.pds.model.Products;
@@ -64,7 +63,9 @@ public class MyProductsApiBareController {
 	ElasticSearchRegistryConnection esRegistryConnection;
 	
 	@Autowired
-	protected ProductBusinessObject productBO;
+	protected ProductBusinessObject productBO;    
+	@Autowired
+    protected Pds4JsonProductBusinessObject pds4JsonProductBO;
 
 	@Autowired
 	ElasticSearchRegistrySearchRequestBuilder searchRequestBuilder;
@@ -73,10 +74,6 @@ public class MyProductsApiBareController {
     public MyProductsApiBareController(ObjectMapper objectMapper, HttpServletRequest context) {
         this.objectMapper = objectMapper;
         this.request = context;
-        
-    	
-    	
-         
     }
 
   @SuppressWarnings("unchecked")
@@ -178,35 +175,49 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
 
     
     
-    protected ResponseEntity<Products> getProductsResponseEntity(String q, String keyword, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) {
+    protected ResponseEntity<Object> getProductsResponseEntity(String q, String keyword, int start, int limit,
+            List<String> fields, List<String> sort, boolean onlySummary)
+    {
         String accept = this.request.getHeader("Accept");
         log.info("accept value is " + accept);
-        if ((accept != null 
-        		&& (accept.contains("application/json") 
-        				|| accept.contains("text/html")
-        				|| accept.contains("application/xml")
-        				|| accept.contains("*/*")))
-        	|| (accept == null)) {
-        	
-        	try {
-	        	
-        	
-        		Products products = this.getProducts(q, keyword, start, limit, fields, sort, onlySummary);
-	        	
-	        	return new ResponseEntity<Products>(products, HttpStatus.OK);
-	        	
-    	  } catch (IOException e) {
-              log.error("Couldn't serialize response for content type " + accept, e);
-              return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
-          }
-        	catch (ParseCancellationException pce) {
-        		log.error("Could not parse the query string: " + q);
-        		return new ResponseEntity<Products>(HttpStatus.BAD_REQUEST);
-        	}            
+        if ((accept != null && 
+                (accept.contains("application/json")
+                        || accept.contains("application/pds4+json")
+                        || accept.contains("text/html")
+                        || accept.contains("application/xml")
+                        || accept.contains("*/*"))) 
+                        || (accept == null))
+        {
+            try
+            {
+                Object products = null;
+                if("application/pds4+json".equals(accept) && !onlySummary)
+                {
+                    products = this.pds4JsonProductBO.getProducts(q, keyword, start, limit, fields, sort, onlySummary);
+                }
+                else
+                {
+                    products = this.getProducts(q, keyword, start, limit, fields, sort, onlySummary);
+                }
+                
+                return new ResponseEntity<Object>(products, HttpStatus.OK);
+            }
+            catch (IOException e)
+            {
+                log.error("Couldn't serialize response for content type " + accept, e);
+                return new ResponseEntity<Object>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            catch (ParseCancellationException pce)
+            {
+                log.error("Could not parse the query string: " + q);
+                return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+            }
         }
-        else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
-    }
-    
+        else
+        {
+            return new ResponseEntity<Object>(HttpStatus.NOT_IMPLEMENTED);
+        }
+    }    
     
     protected ResponseEntity<Object> getProductResponseEntity(String lidvid){
     	String accept = request.getHeader("Accept");
@@ -226,7 +237,7 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
             	
             	if("application/pds4+json".equals(accept))
             	{
-            	    product = this.productBO.getPds4JsonProduct(lidvid);
+            	    product = this.pds4JsonProductBO.getProduct(lidvid);
             	}
             	else
             	{

@@ -45,27 +45,6 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 	private static final String[] DEFAULT_ALL_FIELDS = { "*" };
 	private static final String[] DEFAULT_BLOB = { "ops:Label_File_Info/ops:blob" };
 	
-	private static final String[] PDS4_JSON_PRODUCT_FIELDS = { 
-        // JSON BLOB
-        "ops:Label_File_Info/ops:json_blob",
-        // Label Metadata
-        "ops:Label_File_Info/ops:file_name",
-        "ops:Label_File_Info/ops:creation_date_time",
-        "ops:Label_File_Info/ops:file_ref",
-        "ops:Label_File_Info/ops:file_size",
-        "ops:Label_File_Info/ops:md5_checksum",
-        // File Metadata
-        "ops:Data_File_Info/ops:creation_date_time",
-        "ops:Data_File_Info/ops:file_ref",
-        "ops:Data_File_Info/ops:file_name",
-        "ops:Data_File_Info/ops:file_size",
-        "ops:Data_File_Info/ops:md5_checksum",
-        "ops:Data_File_Info/ops:mime_type",
-        // Node Name
-        "ops:Harvest_Info/ops:node_name"
-	};
-	
-
 	private String registryIndex;
 	private String registryRefIndex;
 	private int timeOutSeconds;
@@ -184,21 +163,6 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 	}
 
 
-	/**
-	 * Create Elasticsearch request to fetch product by LIDVID. 
-	 * Get data required to represent the product in "pds4+json" format.
-	 * @param lidvid LIDVID of a product
-	 * @return Elasticsearch request
-	 */
-    public GetRequest getPds4JsonProductRequest(String lidvid)
-    {
-        GetRequest getProductRequest = new GetRequest(this.registryIndex, lidvid);
-        FetchSourceContext fetchSourceContext = new FetchSourceContext(true, PDS4_JSON_PRODUCT_FIELDS, null);
-        getProductRequest.fetchSourceContext(fetchSourceContext);
-        return getProductRequest;
-    }
-
-    
 	public GetRequest getGetProductRequest(String lidvid) {
 	   	
 		return this.getGetProductRequest(lidvid, false);

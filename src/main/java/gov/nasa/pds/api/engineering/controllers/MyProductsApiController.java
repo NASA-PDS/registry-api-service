@@ -25,7 +25,6 @@ import gov.nasa.pds.api.base.ProductsApi;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
-import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
 import io.swagger.annotations.ApiParam;
@@ -45,7 +44,7 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     }
     
    
-    public ResponseEntity<Products> products(
+    public ResponseEntity<Object> products(
             @ApiParam(value = "offset in matching result list, for pagination", defaultValue = "0") @Valid @RequestParam(value = "start", required = false, defaultValue = "0") Integer start,
             @ApiParam(value = "maximum number of matching results returned, for pagination", defaultValue = "100") @Valid @RequestParam(value = "limit", required = false, defaultValue = "100") Integer limit,
             @ApiParam(value = "search query") @Valid @RequestParam(value = "q", required = false) String q,

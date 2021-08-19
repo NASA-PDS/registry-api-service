@@ -30,7 +30,6 @@ import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntitytProductWithBlob;
 import gov.nasa.pds.api.engineering.exceptions.UnsupportedElasticSearchProperty;
 import gov.nasa.pds.api.model.xml.ProductWithXmlLabel;
-import gov.nasa.pds.model.Pds4Product;
 import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.PropertyArrayValues;
 import gov.nasa.pds.api.model.xml.XMLMashallableProperyValue;
@@ -278,22 +277,4 @@ public class ProductBusinessObject {
 	       		return null;
 	       	}
 	   }
-
-
-       public Pds4Product getPds4JsonProduct(String lidvid) throws IOException 
-       {
-           GetRequest req = this.searchRequestBuilder.getPds4JsonProductRequest(lidvid);
-           RestHighLevelClient client = this.elasticSearchConnection.getRestHighLevelClient();           
-           GetResponse resp = client.get(req, RequestOptions.DEFAULT);
-           
-           if(!resp.isExists())
-           {
-               return null;
-           }
-
-           Map<String, Object> fieldMap = resp.getSourceAsMap();
-           Pds4Product prod = Pds4JsonProductFactory.createProduct(lidvid, fieldMap);
-           return prod;
-       }
-
 }

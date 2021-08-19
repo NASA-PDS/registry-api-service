@@ -49,7 +49,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	return this.getProductResponseEntity(lidvid);
     }
 
-    public ResponseEntity<Products> getBundles(
+    public ResponseEntity<Object> getBundles(
             @ApiParam(value = "offset in matching result list, for pagination", defaultValue = "0") @Valid @RequestParam(value = "start", required = false, defaultValue = "0") Integer start,
             @ApiParam(value = "maximum number of matching results returned, for pagination", defaultValue = "100") @Valid @RequestParam(value = "limit", required = false, defaultValue = "100") Integer limit,
             @ApiParam(value = "search query, complex query uses eq,ne,gt,ge,lt,le,(,),not,and,or. Properties are named as in 'properties' attributes, literals are strings between \" or numbers. Detailed query specification is available at https://bit.ly/393i1af") @Valid @RequestParam(value = "q", required = false) String q,
