@@ -46,14 +46,23 @@ public class ElasticSearchRegistrySearchRequestBuilder {
 	private static final String[] DEFAULT_BLOB = { "ops:Label_File_Info/ops:blob" };
 	
 	private static final String[] PDS4_JSON_PRODUCT_FIELDS = { 
+        // JSON BLOB
         "ops:Label_File_Info/ops:json_blob",
-        // Meta
+        // Label Metadata
+        "ops:Label_File_Info/ops:file_name",
+        "ops:Label_File_Info/ops:creation_date_time",
+        "ops:Label_File_Info/ops:file_ref",
+        "ops:Label_File_Info/ops:file_size",
+        "ops:Label_File_Info/ops:md5_checksum",
+        // File Metadata
         "ops:Data_File_Info/ops:creation_date_time",
         "ops:Data_File_Info/ops:file_ref",
         "ops:Data_File_Info/ops:file_name",
         "ops:Data_File_Info/ops:file_size",
         "ops:Data_File_Info/ops:md5_checksum",
-        "ops:Data_File_Info/ops:mime_type"
+        "ops:Data_File_Info/ops:mime_type",
+        // Node Name
+        "ops:Harvest_Info/ops:node_name"
 	};
 	
 
