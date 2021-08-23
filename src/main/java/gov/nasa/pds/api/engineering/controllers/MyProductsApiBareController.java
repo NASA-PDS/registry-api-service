@@ -31,7 +31,7 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnection;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
-import gov.nasa.pds.api.engineering.elasticsearch.business.Pds4JsonProductBusinessObject;
+import gov.nasa.pds.api.engineering.elasticsearch.business.Pds4JsonProductService;
 import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 
@@ -63,9 +63,10 @@ public class MyProductsApiBareController {
 	ElasticSearchRegistryConnection esRegistryConnection;
 	
 	@Autowired
-	protected ProductBusinessObject productBO;    
+	protected ProductBusinessObject productBO;
+	
 	@Autowired
-    protected Pds4JsonProductBusinessObject pds4JsonProductBO;
+    protected Pds4JsonProductService pds4JsonProductService;
 
 	@Autowired
 	ElasticSearchRegistrySearchRequestBuilder searchRequestBuilder;
@@ -193,7 +194,8 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
                 Object products = null;
                 if("application/pds4+json".equals(accept) && !onlySummary)
                 {
-                    products = this.pds4JsonProductBO.getProducts(q, keyword, start, limit, fields, sort, onlySummary);
+                    products = this.pds4JsonProductService.getProducts(q, keyword, start, limit, 
+                            fields, sort, onlySummary, presetCriteria);
                 }
                 else
                 {
@@ -237,7 +239,7 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
             	
             	if("application/pds4+json".equals(accept))
             	{
-            	    product = this.pds4JsonProductBO.getProduct(lidvid);
+            	    product = this.pds4JsonProductService.getProduct(lidvid);
             	}
             	else
             	{

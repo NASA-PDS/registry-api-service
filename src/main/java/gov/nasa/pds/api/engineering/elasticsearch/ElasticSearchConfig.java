@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnection;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnectionImpl;
-import gov.nasa.pds.api.engineering.elasticsearch.business.Pds4JsonProductBusinessObject;
+import gov.nasa.pds.api.engineering.elasticsearch.business.Pds4JsonProductService;
 import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 
 @Configuration 
@@ -96,9 +96,9 @@ public class ElasticSearchConfig {
 
 	
     @Bean("pds4JsonProductBO")
-    public Pds4JsonProductBusinessObject Pds4JsonProductBusinessObject()
+    public Pds4JsonProductService Pds4JsonProductBusinessObject()
     {
-        return new Pds4JsonProductBusinessObject(this.ElasticSearchRegistryConnection());
+        return new Pds4JsonProductService(this.ElasticSearchRegistryConnection());
     }
 
     

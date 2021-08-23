@@ -17,6 +17,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import gov.nasa.pds.api.engineering.serializer.JsonProductSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4JsonProductSerializer;
+import gov.nasa.pds.api.engineering.serializer.Pds4JsonProductsSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4XmlProductSerializer;
 import gov.nasa.pds.api.engineering.serializer.XmlProductSerializer;
 
@@ -75,6 +76,7 @@ public void configureContentNegotiation(ContentNegotiationConfigurer configurer)
 	  WebMVCConfig.log.info("Number of converters available " + Integer.toString(converters.size()));
 	  converters.add(new JsonProductSerializer());
 	  converters.add(new Pds4JsonProductSerializer());
+	  converters.add(new Pds4JsonProductsSerializer());
 	  
 	  converters.add(new Pds4XmlProductSerializer()); // Product class, application/pds4+xml
 	  converters.add(new XmlProductSerializer()); // Product class, application/xml
