@@ -3,6 +3,7 @@ package gov.nasa.pds.api.engineering.serializer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,18 +56,24 @@ public class Pds4JsonProductSerializer extends AbstractHttpMessageConverter<Pds4
     public void writeInternal(Pds4Product product, HttpOutputMessage msg)
             throws IOException, HttpMessageNotWritableException
     {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setSerializationInclusion(Include.NON_NULL);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(Include.NON_NULL);
         
         OutputStream os = msg.getBody();
         OutputStreamWriter wr = new OutputStreamWriter(os);
-        
+        writeProduct(product, wr, mapper);
+        wr.close();
+    }
+
+    
+    public static void writeProduct(Pds4Product product, Writer wr, ObjectMapper mapper) throws IOException
+    {
         wr.write("{\n");
 
-        String value = objectMapper.writeValueAsString(product.getId());
+        String value = mapper.writeValueAsString(product.getId());
         wr.write("\"id\": " + value + ",\n");
         
-        value = objectMapper.writeValueAsString(product.getMetadata());
+        value = mapper.writeValueAsString(product.getMetadata());
         wr.write("\"meta\": " + value + ",\n");
         
         Object obj = product.getPds4();
@@ -85,7 +92,5 @@ public class Pds4JsonProductSerializer extends AbstractHttpMessageConverter<Pds4
         }
         
         wr.write("}\n");
-        wr.close();
     }
-
 }

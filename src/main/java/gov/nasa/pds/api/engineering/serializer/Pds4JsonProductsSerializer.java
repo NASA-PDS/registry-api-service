@@ -3,9 +3,9 @@ package gov.nasa.pds.api.engineering.serializer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
@@ -16,7 +16,9 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import gov.nasa.pds.model.Pds4Product;
 import gov.nasa.pds.model.Pds4Products;
+
 
 /**
  * Custom serializer to write a Pds4Product in "pds4+json" format.
@@ -24,8 +26,6 @@ import gov.nasa.pds.model.Pds4Products;
  */
 public class Pds4JsonProductsSerializer extends AbstractHttpMessageConverter<Pds4Products>
 {
-    private static final Logger log = LoggerFactory.getLogger(Pds4JsonProductsSerializer.class);
-            
     /**
      * Constructor
      */
@@ -70,11 +70,29 @@ public class Pds4JsonProductsSerializer extends AbstractHttpMessageConverter<Pds
         
         // Data
         wr.write("\"data\":[");
-        
+        writeProducts(products.getData(), wr, mapper);
         wr.write("]\n");
                 
         wr.write("}\n");
         wr.close();
     }
 
+
+    private void writeProducts(List<Pds4Product> list, Writer wr, ObjectMapper mapper) throws IOException
+    {
+        if(list == null) return;
+
+        int size = list.size();
+        for(int i = 0; i < size; i++)
+        {
+            Pds4Product prod = list.get(i);
+            Pds4JsonProductSerializer.writeProduct(prod, wr, mapper);
+
+            if(i < size-1)
+            {
+                wr.write(",\n");
+            }
+        }
+    }
+    
 }
