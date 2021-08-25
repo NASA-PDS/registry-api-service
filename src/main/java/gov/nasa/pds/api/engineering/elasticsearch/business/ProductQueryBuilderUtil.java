@@ -2,7 +2,6 @@ package gov.nasa.pds.api.engineering.elasticsearch.business;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
@@ -10,15 +9,11 @@ import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,27 +123,6 @@ public class ProductQueryBuilderUtil
         walker.walk(listener, tree);
 
         return listener.getBoolQuery();
-    }
-
-    
-    public static SearchRequest createSearchRequest(QueryBuilder query, int from, int size, 
-            String[] includedFields, String[] excludedField, String registryIndex, int timeOutSeconds)
-    {
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(query);
-        searchSourceBuilder.from(from);
-        searchSourceBuilder.size(size);
-
-        FetchSourceContext fetchSourceContext = new FetchSourceContext(true, includedFields, excludedField);
-        searchSourceBuilder.fetchSource(fetchSourceContext);
-
-        searchSourceBuilder.timeout(new TimeValue(timeOutSeconds, TimeUnit.SECONDS));
-
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.source(searchSourceBuilder);
-        searchRequest.indices(registryIndex);
-
-        return searchRequest;
     }
 
 }

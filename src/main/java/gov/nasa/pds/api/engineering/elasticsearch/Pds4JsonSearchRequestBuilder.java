@@ -1,8 +1,5 @@
 package gov.nasa.pds.api.engineering.elasticsearch;
 
-import java.util.List;
-import java.util.Map;
-
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -77,32 +74,38 @@ public class Pds4JsonSearchRequestBuilder
 
     /**
      * Create Elasticsearch request to find products by PDS query or keywords
-     * @param queryString PDS Query string
-     * @param keyword Lucene query
-     * @param fields fields to return
-     * @param start used to paginate results
-     * @param limit used to paginate results
-     * @param presetCriteria used to select only bundles or collections
+     * @param req Request parameters
      * @return Elasticsearch request
      */
-    public SearchRequest getSearchProductsRequest(String queryString, String keyword, List<String> fields, 
-            int start, int limit, Map<String, String> presetCriteria)
+    public SearchRequest getSearchProductsRequest(GetProductsRequest req)
     {
         QueryBuilder query = null;
         
         // "keyword" parameter provided. Run full-text query.
-        if(keyword != null && !keyword.isBlank())
+        if(req.keyword != null && !req.keyword.isBlank())
         {
-            query = ProductQueryBuilderUtil.createKeywordQuery(keyword, presetCriteria);
+            query = ProductQueryBuilderUtil.createKeywordQuery(req.keyword, req.presetCriteria);
         }
         // Run PDS query language ("q" parameter) query
         else
         {
-            query = ProductQueryBuilderUtil.createPqlQuery(queryString, null, presetCriteria);
+            query = ProductQueryBuilderUtil.createPqlQuery(req.queryString, null, req.presetCriteria);
         }
         
-        SearchRequest searchRequest = ProductQueryBuilderUtil.createSearchRequest(query, start, limit, 
-                PDS4_JSON_PRODUCT_FIELDS, null, this.registryIndex, this.timeOutSeconds);
+        SearchRequestBuilder bld = new SearchRequestBuilder(query, req.start, req.limit);
+        
+        if(req.onlySummary)
+        {
+            bld.fetchSource(false, null, null);
+        }
+        else
+        {
+            bld.fetchSource(true, PDS4_JSON_PRODUCT_FIELDS, null);
+        }
+        
+        bld.setTimeoutSeconds(this.timeOutSeconds);
+
+        SearchRequest searchRequest = bld.build(this.registryIndex);
 
         return searchRequest;
     }

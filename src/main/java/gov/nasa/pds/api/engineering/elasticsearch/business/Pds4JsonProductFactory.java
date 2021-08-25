@@ -49,8 +49,10 @@ public class Pds4JsonProductFactory
         Pds4Product prod = new Pds4Product();
         prod.setId(lidvid);
         
+        if(fieldMap == null) return prod;
+                
         // Pds4 JSON BLOB
-        prod.setPds4(fieldMap.get(FLD_JSON_BLOB));        
+        prod.setPds4(fieldMap.get(FLD_JSON_BLOB));
         // Metadata
         prod.setMetadata(createMetadata(fieldMap));
 

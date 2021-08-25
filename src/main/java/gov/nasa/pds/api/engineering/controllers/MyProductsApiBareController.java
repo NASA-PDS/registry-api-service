@@ -31,6 +31,7 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnection;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
+import gov.nasa.pds.api.engineering.elasticsearch.GetProductsRequest;
 import gov.nasa.pds.api.engineering.elasticsearch.business.Pds4JsonProductService;
 import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
@@ -192,10 +193,16 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
             try
             {
                 Object products = null;
-                if("application/pds4+json".equals(accept) && !onlySummary)
+                if("application/pds4+json".equals(accept))
                 {
-                    products = this.pds4JsonProductService.getProducts(q, keyword, start, limit, 
-                            fields, sort, onlySummary, presetCriteria);
+                    GetProductsRequest req = new GetProductsRequest();
+                    req.setSearchCriteria(q, keyword);
+                    req.setPageInfo(start, limit);
+                    req.setFields(fields, sort);
+                    req.presetCriteria = presetCriteria;
+                    req.onlySummary = onlySummary;
+                    
+                    products = this.pds4JsonProductService.getProducts(req);
                 }
                 else
                 {

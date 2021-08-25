@@ -1,7 +1,6 @@
 package gov.nasa.pds.api.engineering.elasticsearch.business;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +13,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.search.SearchHit;
 
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnection;
+import gov.nasa.pds.api.engineering.elasticsearch.GetProductsRequest;
 import gov.nasa.pds.api.engineering.elasticsearch.Pds4JsonSearchRequestBuilder;
 import gov.nasa.pds.model.Pds4Product;
 import gov.nasa.pds.model.Pds4Products;
@@ -54,11 +54,9 @@ public class Pds4JsonProductService
     }
 
     
-    public Pds4Products getProducts(String q, String keyword, int start, int limit, List<String> fields, 
-            List<String> sort, boolean onlySummary, Map<String, String> presetCriteria) throws IOException 
+    public Pds4Products getProducts(GetProductsRequest req) throws IOException 
     {
-        SearchRequest searchRequest = searchRequestBuilder.getSearchProductsRequest(q, keyword, fields, start, limit,
-                presetCriteria);
+        SearchRequest searchRequest = searchRequestBuilder.getSearchProductsRequest(req);
 
         SearchResponse searchResponse = esConnection.getRestHighLevelClient().search(searchRequest,
                 RequestOptions.DEFAULT);
@@ -67,10 +65,10 @@ public class Pds4JsonProductService
 
         // Summary
         Summary summary = new Summary();
-        summary.setQ(q);
-        summary.setStart(start);
-        summary.setLimit(limit);
-        summary.setSort(sort);
+        summary.setQ(req.queryString);
+        summary.setStart(req.start);
+        summary.setLimit(req.limit);
+        summary.setSort(req.sort);
         products.setSummary(summary);
         
         if(searchResponse == null) return products;

@@ -145,9 +145,11 @@ public class ElasticSearchRegistrySearchRequestBuilder {
         String[] includedFields = createIncludedFields(fields);
         String[] excludedFields = { EntitytProductWithBlob.BLOB_PROPERTY };
 
-        SearchRequest searchRequest = ProductQueryBuilderUtil.createSearchRequest(query, start, limit, 
-                includedFields, excludedFields, this.registryIndex, this.timeOutSeconds);
-        log.debug("request elasticSearch :" + searchRequest.toString());
+        SearchRequestBuilder bld = new SearchRequestBuilder(query, start, limit);
+        bld.fetchSource(true, includedFields, excludedFields);
+        bld.setTimeoutSeconds(this.timeOutSeconds);        
+        SearchRequest searchRequest = bld.build(this.registryIndex);
+        log.debug("Elasticsearch request :" + searchRequest.toString());
 
         return searchRequest;
 	}

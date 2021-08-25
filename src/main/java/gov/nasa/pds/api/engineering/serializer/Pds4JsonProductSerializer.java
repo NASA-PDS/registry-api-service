@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gov.nasa.pds.api.engineering.elasticsearch.BlobUtil;
+import gov.nasa.pds.model.Pds4Metadata;
 import gov.nasa.pds.model.Pds4Product;
 
 /**
@@ -71,10 +72,14 @@ public class Pds4JsonProductSerializer extends AbstractHttpMessageConverter<Pds4
         wr.write("{\n");
 
         String value = mapper.writeValueAsString(product.getId());
-        wr.write("\"id\": " + value + ",\n");
+        wr.write("\"id\": " + value);
         
-        value = mapper.writeValueAsString(product.getMetadata());
-        wr.write("\"meta\": " + value + ",\n");
+        Pds4Metadata meta = product.getMetadata();
+        if(meta != null)
+        {
+            value = mapper.writeValueAsString(meta);
+            wr.write(",\n\"meta\": " + value);
+        }
         
         Object obj = product.getPds4();
         if(obj != null)
@@ -82,7 +87,7 @@ public class Pds4JsonProductSerializer extends AbstractHttpMessageConverter<Pds4
             try
             {
                 String pds4json = BlobUtil.blobToString((String)obj);
-                wr.write("\"pds4\": ");
+                wr.write(",\n\"pds4\": ");
                 wr.write(pds4json);
             }
             catch(Exception ex)
