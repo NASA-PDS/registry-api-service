@@ -67,11 +67,11 @@ public class WebMVCConfig implements WebMvcConfigurer {
 		WebMVCConfig.log.info("Number of converters available " + Integer.toString(converters.size()));
 		converters.add(new Pds4JsonProductSerializer());
 		converters.add(new Pds4XmlProductSerializer()); // Product class, application/pds4+xml
-		converters.add(new XmlProductSerializer()); // Product class, application/xml
 
 		/* JILT: never want to see html/xml again!
 		 * To find the other places that need to also be changed if this is ever desired again,
 		 * search the code for JILT. Should be unique enough to not cross over. 
+		converters.add(new XmlProductSerializer()); // Product class, application/xml
 	  	converters.add(new Jaxb2RootElementHttpMessageConverter()); // other classes, application/xml
 		 */
 	}  
