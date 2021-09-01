@@ -99,8 +99,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     private Products getCollectionChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException,LidVidNotFoundException
     {
     	long begin = System.currentTimeMillis();
-  		if (!lidvid.contains("::") && !lidvid.endsWith(":")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
-
+	lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, collections children: " + lidvid);
 
     	HashSet<String> uniqueProperties = new HashSet<String>();
@@ -194,9 +193,8 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
 	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException,LidVidNotFoundException
     {
-  		long begin = System.currentTimeMillis();
-    	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
-
+  	long begin = System.currentTimeMillis();
+    	lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, children of products: " + lidvid);
 
     	int iteration=0,wsize=0;
