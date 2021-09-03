@@ -32,7 +32,6 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnectio
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.api.engineering.elasticsearch.GetProductsRequest;
-import gov.nasa.pds.api.engineering.elasticsearch.business.Pds4JsonProductService;
 import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 
@@ -66,9 +65,6 @@ public class MyProductsApiBareController {
 	@Autowired
 	protected ProductBusinessObject productBO;
 	
-	@Autowired
-    protected Pds4JsonProductService pds4JsonProductService;
-
 	@Autowired
 	ElasticSearchRegistrySearchRequestBuilder searchRequestBuilder;
 	
@@ -202,7 +198,7 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
                     req.presetCriteria = presetCriteria;
                     req.onlySummary = onlySummary;
                     
-                    products = this.pds4JsonProductService.getProducts(req);
+                    products = productBO.getPds4Products(req);
                 }
                 else
                 {
@@ -246,7 +242,7 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
             	
             	if("application/pds4+json".equals(accept))
             	{
-            	    product = this.pds4JsonProductService.getProduct(lidvid);
+            	    product = productBO.getPds4Product(lidvid);
             	}
             	else
             	{
