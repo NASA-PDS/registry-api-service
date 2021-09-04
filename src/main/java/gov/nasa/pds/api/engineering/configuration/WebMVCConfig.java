@@ -8,7 +8,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.xml.Jaxb2RootElementHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -19,7 +18,6 @@ import gov.nasa.pds.api.engineering.serializer.JsonProductSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4JsonProductSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4JsonProductsSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4XmlProductSerializer;
-import gov.nasa.pds.api.engineering.serializer.XmlProductSerializer;
 
 
 @Configuration
@@ -37,7 +35,6 @@ public class WebMVCConfig implements WebMvcConfigurer {
 
 	        registry.addResourceHandler("/webjars/**")
 	                .addResourceLocations("classpath:/META-INF/resources/webjars/");
-
 	}
 	
 	
@@ -45,7 +42,6 @@ public class WebMVCConfig implements WebMvcConfigurer {
 	   public void configurePathMatch(PathMatchConfigurer configurer) {
 		 // this is important to avoid that parameters (e.g lidvid) are truncated after .
 	       configurer.setUseSuffixPatternMatch(false);
-	      
 	   }
 	
 	
@@ -65,8 +61,6 @@ public void configureContentNegotiation(ContentNegotiationConfigurer configurer)
     mediaType("xml", MediaType.APPLICATION_XML).
     mediaType("json", MediaType.APPLICATION_JSON);
     */
-    
-    
   }
   
   
@@ -75,12 +69,14 @@ public void configureContentNegotiation(ContentNegotiationConfigurer configurer)
    
 	  WebMVCConfig.log.info("Number of converters available " + Integer.toString(converters.size()));
 	  converters.add(new JsonProductSerializer());
+
 	  converters.add(new Pds4JsonProductSerializer());
 	  converters.add(new Pds4JsonProductsSerializer());
 	  
-	  converters.add(new Pds4XmlProductSerializer()); // Product class, application/pds4+xml
-	  converters.add(new XmlProductSerializer()); // Product class, application/xml
-	  converters.add(new Jaxb2RootElementHttpMessageConverter()); // other classes, application/xml
+	  converters.add(new Pds4XmlProductSerializer());
+	  
+	  //converters.add(new XmlProductSerializer()); // Product class, application/xml
+	  //converters.add(new Jaxb2RootElementHttpMessageConverter()); // other classes, application/xml
   }
 
   
