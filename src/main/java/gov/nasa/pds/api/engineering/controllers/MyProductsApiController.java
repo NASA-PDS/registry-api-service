@@ -25,6 +25,7 @@ import gov.nasa.pds.api.base.ProductsApi;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
+import gov.nasa.pds.api.engineering.elasticsearch.business.LidVidNotFoundException;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
 import io.swagger.annotations.ApiParam;
@@ -60,9 +61,27 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     public ResponseEntity<Object> productsByLidvid(
             @ApiParam(value = "lidvid (urn)", required = true) @PathVariable("lidvid") String lidvid)
     {
-        return this.getProductResponseEntity(lidvid);
+        return this.getLatestProductResponseEntity(lidvid);
     }
 
+    
+    @Override
+    public ResponseEntity<Object> productsByLidvidLatest(
+            @ApiParam(value = "lidvid (urn)", required = true) @PathVariable("lidvid") String lidvid)
+    {
+        return this.getLatestProductResponseEntity(lidvid);
+    }    
+    
+    
+    @Override
+    public ResponseEntity<Object> productsByLidvidAll(
+            @ApiParam(value = "lidvid (urn)", required = true) @PathVariable("lidvid") String lidvid,
+            @ApiParam(value = "offset in matching result list, for pagination", defaultValue = "0") @Valid @RequestParam(value = "start", required = false, defaultValue = "0") Integer start,
+            @ApiParam(value = "maximum number of matching results returned, for pagination", defaultValue = "10") @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit)
+    {
+        return getAllProductsResponseEntity(lidvid, start, limit);
+    }    
+    
     
 	@Override
 	public ResponseEntity<Products> bundlesContainingProduct(String lidvid, @Valid Integer start, @Valid Integer limit,
@@ -88,14 +107,20 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 				log.error("Couldn't serialize response for content type " + accept, e);
 				return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
 			}
+			catch (LidVidNotFoundException e)
+			{
+				log.warn("Could not find lid(vid) in database: " + lidvid);
+				return new ResponseEntity<Products>(HttpStatus.NOT_FOUND);
+			}
 		 }
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
 
 
 	private Products getContainingBundle(String lidvid, @Valid Integer start, @Valid Integer limit,
-			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException
-	{    	
+			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException,LidVidNotFoundException
+	{
+  		long begin = System.currentTimeMillis();
     	if (!lidvid.contains("::")) lidvid = productBO.getLatestLidVidFromLid(lidvid);
        	MyProductsApiController.log.info("find all bundles containing the product lidvid: " + lidvid);
 
@@ -106,9 +131,11 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 
     	if (sort == null) { sort = Arrays.asList(); }
 
-    	summary.setStart(start);
+    	summary.setHits(-1);
     	summary.setLimit(limit);
     	summary.setSort(sort);
+    	summary.setStart(start);
+    	summary.setTook(-1);
     	products.setSummary(summary);
 
     	if (0 < collectionLIDs.size())
@@ -119,12 +146,13 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     		request.source().from(start);
     		request.source().size(limit);
     		this.fillProductsFromParents(products, uniqueProperties,
-    				ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(), request),
+    				ElasticSearchUtil.collate(this.esRegistryConnection.getRestHighLevelClient(), request, summary),
     				summaryOnly);
     	}
     	else MyProductsApiController.log.warn ("No parent collection for product LIDVID: " + lidvid);
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
+    	summary.setTook((int)(System.currentTimeMillis() - begin));
     	return products;
 	}
 
@@ -153,10 +181,16 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 				log.error("Couldn't serialize response for content type " + accept, e);
 				return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
 			}
+			catch (LidVidNotFoundException e)
+			{
+				log.warn("Could not find lid(vid) in database: " + lidvid);
+				return new ResponseEntity<Products>(HttpStatus.NOT_FOUND);
+			}
 		 }
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
 
+	
 	private List<String> getCollectionLidvids (String lidvid, boolean noVer) throws IOException
 	{
 		List<String> fields = new ArrayList<String>(), lidvids = new ArrayList<String>();
@@ -179,10 +213,13 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
     	return lidvids;
 	}
 
+	
 	private Products getContainingCollection(String lidvid, @Valid Integer start, @Valid Integer limit,
-			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException
-	{	
+			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean summaryOnly) throws IOException,LidVidNotFoundException
+	{
+		  long begin = System.currentTimeMillis();
     	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
+    
        	MyProductsApiController.log.info("find all bundles containing the product lidvid: " + lidvid);
 
        	HashSet<String> uniqueProperties = new HashSet<String>();
@@ -192,18 +229,23 @@ public class MyProductsApiController extends MyProductsApiBareController impleme
 
     	if (sort == null) { sort = Arrays.asList(); }
 
-    	summary.setStart(start);
+    	summary.setHits(-1);
     	summary.setLimit(limit);
     	summary.setSort(sort);
+    	summary.setStart(start);
+    	summary.setTook(-1);
     	products.setSummary(summary);
     	
     	if (0 < collectionLidvids.size())
-    	{ this.fillProductsFromLidvids(products, uniqueProperties,
+    	{ 
+    	    this.fillProductsFromLidvids(products, uniqueProperties,
     			collectionLidvids.subList(start, collectionLidvids.size() < start+limit ? collectionLidvids.size() : +limit), fields,
     			summaryOnly); }
     	else MyProductsApiController.log.warn("Did not find a product with lidvid: " + lidvid);
 
+    	summary.setHits(collectionLidvids.size());
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
+    	summary.setTook((int)(System.currentTimeMillis() - begin));
     	return products;
 	}
 }

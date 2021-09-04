@@ -4,6 +4,8 @@ package gov.nasa.pds.api.engineering.controllers;
 import gov.nasa.pds.api.base.BundlesApi;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchHitIterator;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
+import gov.nasa.pds.api.engineering.elasticsearch.business.LidVidNotFoundException;
+import gov.nasa.pds.model.Product;
 import gov.nasa.pds.model.Products;
 import gov.nasa.pds.model.Summary;
 
@@ -46,9 +48,28 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     @Override
     public ResponseEntity<Object> bundleByLidvid(@ApiParam(value = "lidvid (urn)",required=true) @PathVariable("lidvid") String lidvid)
     {
-    	return this.getProductResponseEntity(lidvid);
+    	return this.getLatestProductResponseEntity(lidvid);
     }
 
+    
+    @Override
+    public ResponseEntity<Object> bundleByLidvidLatest(
+            @ApiParam(value = "lidvid (urn)", required = true) @PathVariable("lidvid") String lidvid)
+    {
+        return this.getLatestProductResponseEntity(lidvid);
+    }
+
+    
+    @Override    
+    public ResponseEntity<Object> bundleByLidvidAll(
+            @ApiParam(value = "lidvid (urn)", required = true) @PathVariable("lidvid") String lidvid,
+            @ApiParam(value = "offset in matching result list, for pagination", defaultValue = "0") @Valid @RequestParam(value = "start", required = false, defaultValue = "0") Integer start,
+            @ApiParam(value = "maximum number of matching results returned, for pagination", defaultValue = "10") @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit)
+    {
+        return getAllProductsResponseEntity(lidvid, start, limit);                
+    }    
+    
+    
     public ResponseEntity<Object> getBundles(
             @ApiParam(value = "offset in matching result list, for pagination", defaultValue = "0") @Valid @RequestParam(value = "start", required = false, defaultValue = "0") Integer start,
             @ApiParam(value = "maximum number of matching results returned, for pagination", defaultValue = "100") @Valid @RequestParam(value = "limit", required = false, defaultValue = "100") Integer limit,
@@ -68,13 +89,12 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     		,@ApiParam(value = "returned fields, syntax field0,field1") @Valid @RequestParam(value = "fields", required = false) List<String> fields
     		,@ApiParam(value = "sort results, syntax asc(field0),desc(field1)") @Valid @RequestParam(value = "sort", required = false) List<String> sort
     		,@ApiParam(value = "only return the summary, useful to get the list of available properties", defaultValue = "false") @Valid @RequestParam(value = "only-summary", required = false, defaultValue="false") Boolean onlySummary
-
-    		
-    		) {
+    		)
+    {
     		return this.getBundlesCollections(lidvid, start, limit, fields, sort, onlySummary);
-    		           		    }
+    }
 
- 	private List<String> getRefLidCollection (String lidvid) throws IOException
+ 	private List<String> getRefLidCollection (String lidvid) throws IOException,LidVidNotFoundException
     {
  		List<String> reflids = new ArrayList<String>();
 
@@ -95,9 +115,10 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
  		return reflids;
     }
     
-    private Products getCollectionChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
+    private Products getCollectionChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException,LidVidNotFoundException
     {
-		if (!lidvid.contains("::") && !lidvid.endsWith(":")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
+    	long begin = System.currentTimeMillis();
+    	lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, collections children: " + lidvid);
 
     	HashSet<String> uniqueProperties = new HashSet<String>();
@@ -107,9 +128,11 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (sort == null) { sort = Arrays.asList(); }
 
-    	summary.setStart(start);
+    	summary.setHits(clidvids.size());
     	summary.setLimit(limit);
     	summary.setSort(sort);
+    	summary.setStart(start);
+    	summary.setTook(-1);
     	products.setSummary(summary);
 
     	if (0 < clidvids.size())
@@ -121,10 +144,12 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
 
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
+    	summary.setTook((int)(System.currentTimeMillis() - begin));
     	return products;	
     }
 
-    private ResponseEntity<Products> getBundlesCollections(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) {
+    private ResponseEntity<Products> getBundlesCollections(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary)
+    {
 		 String accept = this.request.getHeader("Accept");
 		 MyBundlesApiController.log.info("accept value is " + accept);
 		 if ((accept != null 
@@ -132,27 +157,31 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 		 				|| accept.contains("text/html")
 		 				|| accept.contains("application/xml")
 		 				|| accept.contains("*/*")))
-		 	|| (accept == null)) {
-		 	
-		 	try {
-		    	
-		 	
-		 		Products products = this.getCollectionChildren(lidvid, start, limit, fields, sort, onlySummary);
-		    	
-		    	return new ResponseEntity<Products>(products, HttpStatus.OK);
-		    	
-		  } catch (IOException e) {
-		       log.error("Couldn't serialize response for content type " + accept, e);
-		       return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
-		  }
-		     
+		 	|| (accept == null))
+		 {
+			 try
+			 {
+				 Products products = this.getCollectionChildren(lidvid, start, limit, fields, sort, onlySummary);
+				 return new ResponseEntity<Products>(products, HttpStatus.OK);
+			 }
+			 catch (IOException e)
+			 {
+				 log.error("Couldn't serialize response for content type " + accept, e);
+				 return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
+			 }
+		     catch (LidVidNotFoundException e)
+			 {
+				 log.warn("Could not find lid(vid) in database: " + lidvid);
+				 return new ResponseEntity<Products>(HttpStatus.NOT_FOUND);
+			 }
 		 }
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
     }
 
 	@Override
 	public ResponseEntity<Products> productsOfABundle(String lidvid, @Valid Integer start, @Valid Integer limit,
-			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean onlySummary) {
+			@Valid List<String> fields, @Valid List<String> sort, @Valid Boolean onlySummary)
+	{
 		 String accept = this.request.getHeader("Accept");
 		 MyBundlesApiController.log.info("accept value is " + accept);
 		 if ((accept != null 
@@ -160,27 +189,31 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 		 				|| accept.contains("text/html")
 		 				|| accept.contains("application/xml")
 		 				|| accept.contains("*/*")))
-		 	|| (accept == null)) {
-		 	
-		 	try {
-		    	
-		 	
-		 		Products products = this.getProductChildren(lidvid, start, limit, fields, sort, onlySummary);
-		    	
-		    	return new ResponseEntity<Products>(products, HttpStatus.OK);
-		    	
-		  } catch (IOException e) {
-		       log.error("Couldn't serialize response for content type " + accept, e);
-		       return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
-		  }
-		     
+		 	|| (accept == null))
+		 {
+			 try
+			 {
+				 Products products = this.getProductChildren(lidvid, start, limit, fields, sort, onlySummary);
+				 return new ResponseEntity<Products>(products, HttpStatus.OK);
+			 }
+			 catch (IOException e)
+			 {
+				 log.error("Couldn't serialize response for content type " + accept, e);
+				 return new ResponseEntity<Products>(HttpStatus.INTERNAL_SERVER_ERROR);
+			 }
+			 catch (LidVidNotFoundException e)
+			 {
+				 log.warn("Could not find lid(vid) in database: " + lidvid);
+				 return new ResponseEntity<Products>(HttpStatus.NOT_FOUND);
+			 }
 		 }
 		 else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
 	}
 
-	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
+	private Products getProductChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException,LidVidNotFoundException
     {
-    	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
+  	long begin = System.currentTimeMillis();
+    	lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
     	MyBundlesApiController.log.info("request bundle lidvid, children of products: " + lidvid);
 
     	int iteration=0,wsize=0;
@@ -193,9 +226,11 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
     	if (sort == null) { sort = Arrays.asList(); }
 
-    	summary.setStart(start);
+    	summary.setHits(-1);
     	summary.setLimit(limit);
     	summary.setSort(sort);
+    	summary.setStart(start);
+    	summary.setTook(-1);
     	products.setSummary(summary);
 
     	if (0 < clidvids.size())
@@ -221,8 +256,9 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     			if (start <= iteration || start < iteration+wlidvids.size())
     			{ plidvids.addAll(wlidvids.subList(start <= iteration ? 0 : start-iteration, wlidvids.size())); }
 
-    			if (limit <= plidvids.size()) { break; }
-    			else { iteration = iteration + wlidvids.size() + wsize; }
+    			//if (limit <= plidvids.size()) { break; }
+    			//else { iteration = iteration + wlidvids.size() + wsize; }
+    			iteration = iteration + wlidvids.size() + wsize;
     		}
     	}
     	else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
@@ -236,7 +272,9 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
     	}
     	else MyBundlesApiController.log.warn ("Did not find any products for bundle lidvid: " + lidvid);
 
+    	summary.setHits(iteration);
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
+    	summary.setTook((int)(System.currentTimeMillis() - begin));
     	return products;	
     }
 }

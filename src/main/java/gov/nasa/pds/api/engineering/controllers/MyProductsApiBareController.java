@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,6 +34,7 @@ import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnectio
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistrySearchRequestBuilder;
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchUtil;
 import gov.nasa.pds.api.engineering.elasticsearch.GetProductsRequest;
+import gov.nasa.pds.api.engineering.elasticsearch.business.LidVidNotFoundException;
 import gov.nasa.pds.api.engineering.elasticsearch.business.ProductBusinessObject;
 import gov.nasa.pds.api.engineering.elasticsearch.entities.EntityProduct;
 
@@ -74,8 +77,8 @@ public class MyProductsApiBareController {
         this.request = context;
     }
 
-  @SuppressWarnings("unchecked")
-protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, boolean onlySummary) throws IOException
+    @SuppressWarnings("unchecked")
+    protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, boolean onlySummary) throws IOException
     {
     	for (final Map<String,Object> kvp : new ElasticSearchHitIterator(lidvids.size(), this.esRegistryConnection.getRestHighLevelClient(),
 				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
@@ -92,6 +95,7 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
 
     }
 
+    
     @SuppressWarnings("unchecked")
 	protected void fillProductsFromParents (Products products, HashSet<String> uniqueProperties, List<Map<String,Object>> results, boolean onlySummary) throws IOException
     {
@@ -108,8 +112,10 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
     }
 
     @SuppressWarnings("unchecked")
-	protected Products getProducts(String q, String keyword, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException {
-    		        	
+	protected Products getProducts(String q, String keyword, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
+    {
+    	long begin = System.currentTimeMillis();
+
     	SearchRequest searchRequest = this.searchRequestBuilder.getSearchProductsRequest(q, keyword, fields, start, limit, this.presetCriteria);
     	
     	SearchResponse searchResponse = this.esRegistryConnection.getRestHighLevelClient().search(searchRequest, 
@@ -121,10 +127,12 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
     	
       	Summary summary = new Summary();
 
+      	summary.setHits(-1);
+    	summary.setLimit(limit);
       	summary.setQ((q != null)?q:"" );
     	summary.setStart(start);
-    	summary.setLimit(limit);
-    	
+    	summary.setTook(-1);
+
     	if (sort == null) {
     		sort = Arrays.asList();
     	}	
@@ -133,7 +141,7 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
     	products.setSummary(summary);
     	
     	if (searchResponse != null) {
-    		
+    		summary.setHits((int)searchResponse.getHits().getTotalHits().value);
     		for (SearchHit searchHit : searchResponse.getHits()) {
     	        Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
     	        
@@ -165,7 +173,7 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
     	
     	
     	summary.setProperties(new ArrayList<String>(uniqueProperties));
-    	
+    	summary.setTook((int)(System.currentTimeMillis() - begin));
     	return products;
     }
     
@@ -224,7 +232,77 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
         }
     }    
     
-    protected ResponseEntity<Object> getProductResponseEntity(String lidvid){
+    
+    protected ResponseEntity<Object> getAllProductsResponseEntity(String lidvid, int start, int limit)
+    {
+        String accept = this.request.getHeader("Accept");
+        log.info("accept value is " + accept);
+        if ((accept != null && (accept.contains("application/json") || accept.contains("text/html")
+                || accept.contains("application/xml") || accept.contains("*/*"))) || (accept == null))
+        {
+            try
+            {
+                Products products = getProductsByLid(lidvid, start, limit);
+                return new ResponseEntity<Object>(products, HttpStatus.OK);
+            }
+            catch (IOException e)
+            {
+                log.error("Couldn't serialize response for content type " + accept, e);
+                return new ResponseEntity<Object>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            catch (ParseCancellationException pce)
+            {
+                log.error("", pce);
+                return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+            }
+        }
+        else
+        {
+            return new ResponseEntity<Object>(HttpStatus.NOT_IMPLEMENTED);
+        }
+    }    
+    
+    
+    public Products getProductsByLid(String lid, int start, int limit) throws IOException 
+    {
+        SearchRequest req = searchRequestBuilder.getSearchProductsByLid(lid, start, limit);
+        SearchResponse resp = esRegistryConnection.getRestHighLevelClient().search(req, RequestOptions.DEFAULT);
+        
+        Products products = new Products();
+        
+        Summary summary = new Summary();
+        summary.setStart(start);
+        summary.setLimit(limit);
+        products.setSummary(summary);
+        
+        if(resp == null) return products;
+
+        Set<String> uniqueProperties = new TreeSet<>();
+
+        for(SearchHit searchHit : resp.getHits()) 
+        {
+            Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
+            
+            Map<String, XMLMashallableProperyValue> filteredMapJsonProperties = ProductBusinessObject
+                    .getFilteredProperties(sourceAsMap, null, null);
+            
+            uniqueProperties.addAll(filteredMapJsonProperties.keySet());
+
+            EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
+
+            Product product = ElasticSearchUtil.ESentityProductToAPIProduct(entityProduct, this.getBaseURL());
+            product.setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)filteredMapJsonProperties);
+
+            products.addDataItem(product);
+        }
+        
+        summary.setProperties(new ArrayList<String>(uniqueProperties));
+        return products;
+    }
+
+    
+    protected ResponseEntity<Object> getLatestProductResponseEntity(String lidvid)
+    {
     	String accept = request.getHeader("Accept");
         if ((accept != null) 
         		&& (accept.contains("application/json")
@@ -234,9 +312,9 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
 				|| accept.contains("application/pds4+xml")
 				|| accept.contains("application/pds4+json"))) {
         	
-            try {
-            	
-            	if (!lidvid.contains("::")) lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
+            try 
+            {
+            	lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
             	
             	Object product = null;
             	
@@ -249,18 +327,25 @@ protected void fillProductsFromLidvids (Products products, HashSet<String> uniqu
             	    product = this.productBO.getProductWithXml(lidvid, this.getBaseURL());
             	}
             	
-               	if (product != null) {	
+               	if (product != null) 
+               	{	
 	        		return new ResponseEntity<Object>(product, HttpStatus.OK);
 	        	}		        	
-	        	else {
+	        	else 
+	        	{
 	        		// TODO send 302 redirection to a different server if one exists
 	        		return new ResponseEntity<Object>(HttpStatus.NOT_FOUND);
 	        	}
-	        		
-
-            } catch (IOException e) {
+	        } 
+            catch (IOException e) 
+            {
                 log.error("Couldn't get or serialize response for content type " + accept, e);
                 return new ResponseEntity<Object>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            catch (LidVidNotFoundException e)
+            {
+                log.warn("Could not find lid(vid) in database: " + lidvid);
+                return new ResponseEntity<Object>(HttpStatus.NOT_FOUND);
             }
         }
 
