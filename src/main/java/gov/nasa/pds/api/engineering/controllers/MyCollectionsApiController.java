@@ -229,9 +229,7 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
          }
          else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
     }
-
     
-
     private Products getContainingBundle(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean summaryOnly) throws IOException,LidVidNotFoundException
     {
         long begin = System.currentTimeMillis();
@@ -259,6 +257,6 @@ public class MyCollectionsApiController extends MyProductsApiBareController impl
         summary.setProperties(new ArrayList<String>(uniqueProperties));
         summary.setTook((int)(System.currentTimeMillis() - begin));
         return products;
-    }	
+    }
 
 }
