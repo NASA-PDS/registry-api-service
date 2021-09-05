@@ -46,31 +46,31 @@ import gov.nasa.pds.model.Summary;
 
 @Component
 public class MyProductsApiBareController {
-	
-	private static final Logger log = LoggerFactory.getLogger(MyProductsApiBareController.class);  
-	
+    
+    private static final Logger log = LoggerFactory.getLogger(MyProductsApiBareController.class);  
+    
     protected final ObjectMapper objectMapper;
 
     protected final HttpServletRequest request;   
 
-	protected Map<String, String> presetCriteria = new HashMap<String, String>();
-	
-	@Value("${server.contextPath}")
-	protected String contextPath;
-	
-	@Autowired
-	protected HttpServletRequest context;
-	
-	// TODO remove and replace by BusinessObjects 
-	@Autowired
-	ElasticSearchRegistryConnection esRegistryConnection;
-	
-	@Autowired
-	protected ProductBusinessObject productBO;
-	
-	@Autowired
-	ElasticSearchRegistrySearchRequestBuilder searchRequestBuilder;
-	
+    protected Map<String, String> presetCriteria = new HashMap<String, String>();
+    
+    @Value("${server.contextPath}")
+    protected String contextPath;
+    
+    @Autowired
+    protected HttpServletRequest context;
+    
+    // TODO remove and replace by BusinessObjects 
+    @Autowired
+    ElasticSearchRegistryConnection esRegistryConnection;
+    
+    @Autowired
+    protected ProductBusinessObject productBO;
+    
+    @Autowired
+    ElasticSearchRegistrySearchRequestBuilder searchRequestBuilder;
+    
 
     public MyProductsApiBareController(ObjectMapper objectMapper, HttpServletRequest context) {
         this.objectMapper = objectMapper;
@@ -80,101 +80,101 @@ public class MyProductsApiBareController {
     @SuppressWarnings("unchecked")
     protected void fillProductsFromLidvids (Products products, HashSet<String> uniqueProperties, List<String> lidvids, List<String> fields, boolean onlySummary) throws IOException
     {
-    	for (final Map<String,Object> kvp : new ElasticSearchHitIterator(lidvids.size(), this.esRegistryConnection.getRestHighLevelClient(),
-				ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
-						lidvids, fields, this.esRegistryConnection.getRegistryIndex())))
-		{
-			uniqueProperties.addAll(kvp.keySet());
+        for (final Map<String,Object> kvp : new ElasticSearchHitIterator(lidvids.size(), this.esRegistryConnection.getRestHighLevelClient(),
+                ElasticSearchRegistrySearchRequestBuilder.getQueryFieldsFromKVP("lidvid",
+                        lidvids, fields, this.esRegistryConnection.getRegistryIndex())))
+        {
+            uniqueProperties.addAll(kvp.keySet());
 
-			if (!onlySummary)
-			{
-				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class), this.getBaseURL()));
-				products.getData().get(products.getData().size()-1).setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)ProductBusinessObject.getFilteredProperties(kvp, null, null));
-			}
-		}
+            if (!onlySummary)
+            {
+                products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class), this.getBaseURL()));
+                products.getData().get(products.getData().size()-1).setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)ProductBusinessObject.getFilteredProperties(kvp, null, null));
+            }
+        }
 
     }
 
     
     @SuppressWarnings("unchecked")
-	protected void fillProductsFromParents (Products products, HashSet<String> uniqueProperties, List<Map<String,Object>> results, boolean onlySummary) throws IOException
+    protected void fillProductsFromParents (Products products, HashSet<String> uniqueProperties, List<Map<String,Object>> results, boolean onlySummary) throws IOException
     {
-    	for (Map<String,Object> kvp : results)
-    	{
-			uniqueProperties.addAll(kvp.keySet());
+        for (Map<String,Object> kvp : results)
+        {
+            uniqueProperties.addAll(kvp.keySet());
 
-			if (!onlySummary)
-			{
-				products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class), this.getBaseURL()));
-				products.getData().get(products.getData().size()-1).setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)ProductBusinessObject.getFilteredProperties(kvp, null, null));
-			}
-    	}
+            if (!onlySummary)
+            {
+                products.addDataItem(ElasticSearchUtil.ESentityProductToAPIProduct(objectMapper.convertValue(kvp, EntityProduct.class), this.getBaseURL()));
+                products.getData().get(products.getData().size()-1).setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)ProductBusinessObject.getFilteredProperties(kvp, null, null));
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
-	protected Products getProducts(String q, String keyword, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
+    protected Products getProducts(String q, String keyword, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException
     {
-    	long begin = System.currentTimeMillis();
+        long begin = System.currentTimeMillis();
 
-    	SearchRequest searchRequest = this.searchRequestBuilder.getSearchProductsRequest(q, keyword, fields, start, limit, this.presetCriteria);
-    	
-    	SearchResponse searchResponse = this.esRegistryConnection.getRestHighLevelClient().search(searchRequest, 
-    			RequestOptions.DEFAULT);
-    	
-    	Products products = new Products();
-    	
-    	HashSet<String> uniqueProperties = new HashSet<String>();
-    	
-      	Summary summary = new Summary();
+        SearchRequest searchRequest = this.searchRequestBuilder.getSearchProductsRequest(q, keyword, fields, start, limit, this.presetCriteria);
+        
+        SearchResponse searchResponse = this.esRegistryConnection.getRestHighLevelClient().search(searchRequest, 
+                RequestOptions.DEFAULT);
+        
+        Products products = new Products();
+        
+        HashSet<String> uniqueProperties = new HashSet<String>();
+        
+        Summary summary = new Summary();
 
-      	summary.setHits(-1);
-    	summary.setLimit(limit);
-      	summary.setQ((q != null)?q:"" );
-    	summary.setStart(start);
-    	summary.setTook(-1);
+        summary.setHits(-1);
+        summary.setLimit(limit);
+        summary.setQ((q != null)?q:"" );
+        summary.setStart(start);
+        summary.setTook(-1);
 
-    	if (sort == null) {
-    		sort = Arrays.asList();
-    	}	
-    	summary.setSort(sort);
-    	
-    	products.setSummary(summary);
-    	
-    	if (searchResponse != null) {
-    		summary.setHits((int)searchResponse.getHits().getTotalHits().value);
-    		for (SearchHit searchHit : searchResponse.getHits()) {
-    	        Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
-    	        
-    	        Map<String, XMLMashallableProperyValue> filteredMapJsonProperties = ProductBusinessObject.getFilteredProperties(
-    	        		sourceAsMap, 
-    	        		fields, 
-    	        		null
-    	        		);
-    	        
-    	        uniqueProperties.addAll(filteredMapJsonProperties.keySet());
+        if (sort == null) {
+            sort = Arrays.asList();
+        }   
+        summary.setSort(sort);
+        
+        products.setSummary(summary);
+        
+        if (searchResponse != null) {
+            summary.setHits((int)searchResponse.getHits().getTotalHits().value);
+            for (SearchHit searchHit : searchResponse.getHits()) {
+                Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
+                
+                Map<String, XMLMashallableProperyValue> filteredMapJsonProperties = ProductBusinessObject.getFilteredProperties(
+                        sourceAsMap, 
+                        fields, 
+                        null
+                        );
+                
+                uniqueProperties.addAll(filteredMapJsonProperties.keySet());
 
-    	        if (!onlySummary) {
-    	        	
-    	        	
-        	        EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
+                if (!onlySummary) {
+                    
+                    
+                    EntityProduct entityProduct = objectMapper.convertValue(sourceAsMap, EntityProduct.class);
 
-        	        Product product = ElasticSearchUtil.ESentityProductToAPIProduct(
-        	        		entityProduct, 
-        	        		this.getBaseURL());
-					product.setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)filteredMapJsonProperties);
+                    Product product = ElasticSearchUtil.ESentityProductToAPIProduct(
+                            entityProduct, 
+                            this.getBaseURL());
+                    product.setProperties((Map<String, PropertyArrayValues>)(Map<String, ?>)filteredMapJsonProperties);
 
-        	        products.addDataItem(product);
-    	        }
-    	        
-    	    }
+                    products.addDataItem(product);
+                }
+                
+            }
      
             
-    	}
-    	
-    	
-    	summary.setProperties(new ArrayList<String>(uniqueProperties));
-    	summary.setTook((int)(System.currentTimeMillis() - begin));
-    	return products;
+        }
+        
+        
+        summary.setProperties(new ArrayList<String>(uniqueProperties));
+        summary.setTook((int)(System.currentTimeMillis() - begin));
+        return products;
     }
     
  
@@ -303,40 +303,40 @@ public class MyProductsApiBareController {
     
     protected ResponseEntity<Object> getLatestProductResponseEntity(String lidvid)
     {
-    	String accept = request.getHeader("Accept");
+        String accept = request.getHeader("Accept");
         if ((accept != null) 
-        		&& (accept.contains("application/json")
-				|| accept.contains("text/html")
-				|| accept.contains("*/*")
-				|| accept.contains("application/xml")
-				|| accept.contains("application/pds4+xml")
-				|| accept.contains("application/pds4+json"))) {
-        	
+                && (accept.contains("application/json")
+                || accept.contains("text/html")
+                || accept.contains("*/*")
+                || accept.contains("application/xml")
+                || accept.contains("application/pds4+xml")
+                || accept.contains("application/pds4+json"))) {
+            
             try 
             {
-            	lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
-            	
-            	Object product = null;
-            	
-            	if("application/pds4+json".equals(accept))
-            	{
-            	    product = productBO.getPds4Product(lidvid);
-            	}
-            	else
-            	{
-            	    product = this.productBO.getProductWithXml(lidvid, this.getBaseURL());
-            	}
-            	
-               	if (product != null) 
-               	{	
-	        		return new ResponseEntity<Object>(product, HttpStatus.OK);
-	        	}		        	
-	        	else 
-	        	{
-	        		// TODO send 302 redirection to a different server if one exists
-	        		return new ResponseEntity<Object>(HttpStatus.NOT_FOUND);
-	        	}
-	        } 
+                lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
+                
+                Object product = null;
+                
+                if("application/pds4+json".equals(accept))
+                {
+                    product = productBO.getPds4Product(lidvid);
+                }
+                else
+                {
+                    product = this.productBO.getProductWithXml(lidvid, this.getBaseURL());
+                }
+                
+                if (product != null) 
+                {   
+                    return new ResponseEntity<Object>(product, HttpStatus.OK);
+                }                   
+                else 
+                {
+                    // TODO send 302 redirection to a different server if one exists
+                    return new ResponseEntity<Object>(HttpStatus.NOT_FOUND);
+                }
+            } 
             catch (IOException e) 
             {
                 log.error("Couldn't get or serialize response for content type " + accept, e);
@@ -354,30 +354,30 @@ public class MyProductsApiBareController {
 
     
     private boolean proxyRunsOnDefaultPort() {
-    	return (((this.context.getScheme() == "https")  && (this.context.getServerPort() == 443)) 
-    			|| ((this.context.getScheme() == "http")  && (this.context.getServerPort() == 80)));
+        return (((this.context.getScheme() == "https")  && (this.context.getServerPort() == 443)) 
+                || ((this.context.getScheme() == "http")  && (this.context.getServerPort() == 80)));
     }
  
     protected URL getBaseURL() {
-    	try {
-    		MyProductsApiBareController.log.debug("contextPath is: " + this.contextPath);
-    		
-    		URL baseURL;
-    		if (this.proxyRunsOnDefaultPort()) {
-    			baseURL = new URL(this.context.getScheme(), this.context.getServerName(), this.contextPath);
-    		} 
-    		else {
-    			baseURL = new URL(this.context.getScheme(), this.context.getServerName(), this.context.getServerPort(), this.contextPath);
-    		}
-	      	
-	      	MyProductsApiBareController.log.info("baseUrl is " + baseURL.toString());
-	      	return baseURL;
-	      	
+        try {
+            MyProductsApiBareController.log.debug("contextPath is: " + this.contextPath);
+            
+            URL baseURL;
+            if (this.proxyRunsOnDefaultPort()) {
+                baseURL = new URL(this.context.getScheme(), this.context.getServerName(), this.contextPath);
+            } 
+            else {
+                baseURL = new URL(this.context.getScheme(), this.context.getServerName(), this.context.getServerPort(), this.contextPath);
+            }
+            
+            MyProductsApiBareController.log.info("baseUrl is " + baseURL.toString());
+            return baseURL;
+            
 
-    	} catch (MalformedURLException e) {
-    		log.error("Server URL was not retrieved");
-    		return null;
-    	}
+        } catch (MalformedURLException e) {
+            log.error("Server URL was not retrieved");
+            return null;
+        }
     }
 
 }

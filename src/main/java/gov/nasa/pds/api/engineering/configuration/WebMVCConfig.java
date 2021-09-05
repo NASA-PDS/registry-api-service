@@ -24,27 +24,27 @@ import gov.nasa.pds.api.engineering.serializer.Pds4XmlProductSerializer;
 @EnableWebMvc
 @ComponentScan(basePackages = { "gov.nasa.pds.api.engineering.configuration ",  "gov.nasa.pds.api.engineering.controllers", "gov.nasa.pds.api.engineering.elasticsearch"})
 public class WebMVCConfig implements WebMvcConfigurer {
-	
-	private static final Logger log = LoggerFactory.getLogger(WebMVCConfig.class);
-	
-	@Override
-	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    
+    private static final Logger log = LoggerFactory.getLogger(WebMVCConfig.class);
+    
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
 
-	       registry.addResourceHandler("swagger-ui.html")
-	                .addResourceLocations("classpath:/META-INF/resources/");
+           registry.addResourceHandler("swagger-ui.html")
+                    .addResourceLocations("classpath:/META-INF/resources/");
 
-	        registry.addResourceHandler("/webjars/**")
-	                .addResourceLocations("classpath:/META-INF/resources/webjars/");
-	}
-	
-	
-	 @Override
-	   public void configurePathMatch(PathMatchConfigurer configurer) {
-		 // this is important to avoid that parameters (e.g lidvid) are truncated after .
-	       configurer.setUseSuffixPatternMatch(false);
-	   }
-	
-	
+            registry.addResourceHandler("/webjars/**")
+                    .addResourceLocations("classpath:/META-INF/resources/webjars/");
+    }
+    
+    
+     @Override
+       public void configurePathMatch(PathMatchConfigurer configurer) {
+         // this is important to avoid that parameters (e.g lidvid) are truncated after .
+           configurer.setUseSuffixPatternMatch(false);
+       }
+    
+    
   /**
    * Setup a simple strategy: use all the defaults and return XML by default when not sure. 
  */
@@ -67,16 +67,16 @@ public void configureContentNegotiation(ContentNegotiationConfigurer configurer)
   @Override
   public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
    
-	  WebMVCConfig.log.info("Number of converters available " + Integer.toString(converters.size()));
-	  converters.add(new JsonProductSerializer());
+      WebMVCConfig.log.info("Number of converters available " + Integer.toString(converters.size()));
+      converters.add(new JsonProductSerializer());
 
-	  converters.add(new Pds4JsonProductSerializer());
-	  converters.add(new Pds4JsonProductsSerializer());
-	  
-	  converters.add(new Pds4XmlProductSerializer());
-	  
-	  //converters.add(new XmlProductSerializer()); // Product class, application/xml
-	  //converters.add(new Jaxb2RootElementHttpMessageConverter()); // other classes, application/xml
+      converters.add(new Pds4JsonProductSerializer());
+      converters.add(new Pds4JsonProductsSerializer());
+      
+      converters.add(new Pds4XmlProductSerializer());
+      
+      //converters.add(new XmlProductSerializer()); // Product class, application/xml
+      //converters.add(new Jaxb2RootElementHttpMessageConverter()); // other classes, application/xml
   }
 
   
