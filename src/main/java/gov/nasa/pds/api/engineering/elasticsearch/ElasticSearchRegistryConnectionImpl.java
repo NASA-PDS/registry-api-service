@@ -183,4 +183,17 @@ public class ElasticSearchRegistryConnectionImpl implements ElasticSearchRegistr
     	
     	return result;
     }
+    
+    
+    public void close()
+    {
+        try
+        {
+            restHighLevelClient.close();
+        }
+        catch(Exception ex)
+        {
+            // Ignore
+        }
+    }
 }

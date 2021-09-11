@@ -93,35 +93,17 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
             return this.getBundlesCollections(lidvid, start, limit, fields, sort, onlySummary);
     }
 
-    private List<String> getRefLidCollection (String lidvid) throws IOException,LidVidNotFoundException
-    {
-        List<String> reflids = new ArrayList<String>();
-
-        for (final Map<String, Object> bundle : new ElasticSearchHitIterator(this.esRegistryConnection.getRestHighLevelClient(),
-                ElasticSearchRegistrySearchRequestBuilder.getQueryFieldFromLidvid(lidvid, "ref_lid_collection",
-                        this.esRegistryConnection.getRegistryIndex())))
-        {
-            if (bundle.get("ref_lid_collection") instanceof String)
-            { reflids.add(this.productBO.getLatestLidVidFromLid(bundle.get("ref_lid_collection").toString())); }
-            else
-            {
-                @SuppressWarnings("unchecked")
-                List<String> clids = (List<String>)bundle.get("ref_lid_collection");
-                for (String clid : clids)
-                { reflids.add(this.productBO.getLatestLidVidFromLid(clid)); }
-            }
-        }
-        return reflids;
-    }
     
-    private Products getCollectionChildren(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary) throws IOException,LidVidNotFoundException
+    private Products getCollectionChildren(String lidvid, int start, int limit, List<String> fields, 
+            List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException
     {
         long begin = System.currentTimeMillis();
         lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
         MyBundlesApiController.log.info("request bundle lidvid, collections children: " + lidvid);
+        
+        List<String> clidvids = productBO.getBundleDao().getBundleCollectionLidVids(lidvid);
 
         HashSet<String> uniqueProperties = new HashSet<String>();
-        List<String> clidvids = this.getRefLidCollection(lidvid);
         Products products = new Products();
         Summary summary = new Summary();
 
@@ -160,7 +142,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
          {
              try
              {
-                 Products products = this.getCollectionChildren(lidvid, start, limit, fields, sort, onlySummary);
+                 Products products = productBO.getBundleDao().getBundleCollections(lidvid, start, limit, fields, sort, onlySummary);
                  return new ResponseEntity<Products>(products, HttpStatus.OK);
              }
              catch (IOException e)
@@ -217,7 +199,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
 
         int iteration=0,wsize=0;
         HashSet<String> uniqueProperties = new HashSet<String>();
-        List<String> clidvids = this.getRefLidCollection(lidvid);
+        List<String> clidvids = productBO.getBundleDao().getBundleCollectionLidVids(lidvid);
         List<String> plidvids = new ArrayList<String>();   
         List<String> wlidvids = new ArrayList<String>();
         Products products = new Products();
