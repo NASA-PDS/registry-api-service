@@ -55,7 +55,7 @@
 			<lineEnding>unix</lineEnding>
 		</file>
 		<file>
-			<source>NOTICE.md</source>
+			<source>NOTICE.txt</source>
 			<outputDirectory>/</outputDirectory>
 			<fileMode>664</fileMode>
 			<lineEnding>unix</lineEnding>
