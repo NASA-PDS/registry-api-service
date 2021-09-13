@@ -16,4 +16,4 @@ The following table describes what versions are supported and which are not.
 
 ## 🚨 Reporting a Vulnerability
 
-Please create a new issue using the [Vulnerability Issue template](https://github.com/NASA-PDS/registry-api-service/issues/new?assignees=jordanpadams&labels=bug%2C+needs%3Atriage%2C+security&template=vulnerability-issue.md&title=%5BSECURITY%5D+Title+Here).
+Please create a new issue using the [Vulnerability Issue template](https://github.com/NASA-PDS/registry-api-service/issues/new).
