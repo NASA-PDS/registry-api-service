@@ -254,7 +254,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
         
         MyBundlesApiController.log.info("found " + Integer.toString(plidvids.size()) + " products in this bundle");
 
-        if (0 < plidvids.size())
+        if (plidvids.size() > 0 && limit > 0)
         {
             this.fillProductsFromLidvids(products, uniqueProperties,
                     plidvids.subList(0, plidvids.size() < limit ? plidvids.size() : limit), fields, onlySummary);
