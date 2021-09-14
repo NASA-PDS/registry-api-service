@@ -90,16 +90,17 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
             ,@ApiParam(value = "only return the summary, useful to get the list of available properties", defaultValue = "false") @Valid @RequestParam(value = "only-summary", required = false, defaultValue="false") Boolean onlySummary
             )
     {
-            return this.getBundlesCollections(lidvid, start, limit, fields, sort, onlySummary);
+            return this.getBundlesCollectionsEntity(lidvid, start, limit, fields, sort, onlySummary);
     }
 
     
-    private Products getCollectionChildren(String lidvid, int start, int limit, List<String> fields, 
+    private Products getBundleCollections(String lidvid, int start, int limit, List<String> fields, 
             List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException
     {
         long begin = System.currentTimeMillis();
-        lidvid = this.productBO.getLatestLidVidFromLid(lidvid);
-        MyBundlesApiController.log.info("request bundle lidvid, collections children: " + lidvid);
+        
+        lidvid = productBO.getLidVidDao().getLatestLidVidFromLid(lidvid);
+        MyBundlesApiController.log.info("Get bundle's collections. Bundle LIDVID = " + lidvid);
         
         List<String> clidvids = productBO.getBundleDao().getBundleCollectionLidVids(lidvid);
 
@@ -110,26 +111,32 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
         if (sort == null) { sort = Arrays.asList(); }
 
         summary.setHits(clidvids.size());
+        summary.setStart(start);
         summary.setLimit(limit);
         summary.setSort(sort);
-        summary.setStart(start);
-        summary.setTook(-1);
         products.setSummary(summary);
 
-        if (0 < clidvids.size())
+        int size = clidvids.size();
+        if (size > 0 && start < size && limit > 0)
         {
-            this.fillProductsFromLidvids(products, uniqueProperties,
-                    clidvids.subList(start, clidvids.size() < start+limit ? clidvids.size(): start+limit),
-                    fields, onlySummary);
+            int end = start + limit;
+            if(end > size) end = size;
+            List<String> ids = clidvids.subList(start, end);
+            fillProductsFromLidvids(products, uniqueProperties, ids, fields, onlySummary);
         }
-        else MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
+        else 
+        {
+            MyBundlesApiController.log.warn ("Did not find any collections for bundle lidvid: " + lidvid);
+        }
 
         summary.setProperties(new ArrayList<String>(uniqueProperties));
         summary.setTook((int)(System.currentTimeMillis() - begin));
         return products;    
     }
 
-    private ResponseEntity<Products> getBundlesCollections(String lidvid, int start, int limit, List<String> fields, List<String> sort, boolean onlySummary)
+    
+    private ResponseEntity<Products> getBundlesCollectionsEntity(String lidvid, int start, int limit, 
+            List<String> fields, List<String> sort, boolean onlySummary)
     {
          String accept = this.request.getHeader("Accept");
          MyBundlesApiController.log.info("accept value is " + accept);
@@ -142,7 +149,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
          {
              try
              {
-                 Products products = productBO.getBundleDao().getBundleCollections(lidvid, start, limit, fields, sort, onlySummary);
+                 Products products = getBundleCollections(lidvid, start, limit, fields, sort, onlySummary);
                  return new ResponseEntity<Products>(products, HttpStatus.OK);
              }
              catch (IOException e)
@@ -159,6 +166,7 @@ public class MyBundlesApiController extends MyProductsApiBareController implemen
          else return new ResponseEntity<Products>(HttpStatus.NOT_IMPLEMENTED);
     }
 
+    
     @Override
     public ResponseEntity<Products> productsOfABundle(String lidvid, @Valid Integer start, @Valid Integer limit,
             @Valid List<String> fields, @Valid List<String> sort, @Valid Boolean onlySummary)

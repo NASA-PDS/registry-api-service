@@ -53,7 +53,8 @@ public class ProductBusinessObject {
     private ObjectMapper objectMapper;
     
     static final String LIDVID_SEPARATOR = "::";
-    
+
+    private LidVidDAO lidVidDao;
     private BundleDAO bundleDao;
     
     public ProductBusinessObject(ElasticSearchRegistryConnection esRegistryConnection) {
@@ -71,10 +72,16 @@ public class ProductBusinessObject {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         
+        lidVidDao = new LidVidDAO(esRegistryConnection);
         bundleDao = new BundleDAO(esRegistryConnection);
     }
     
-    
+
+    public LidVidDAO getLidVidDao()
+    {
+        return lidVidDao;
+    }
+
     public BundleDAO getBundleDao()
     {
         return bundleDao;

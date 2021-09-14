@@ -18,8 +18,7 @@ public class TestLidVidUtils
         //System.out.println(src);
         
         
-        ElasticSearchRegistryConnection con = new ElasticSearchRegistryConnectionImpl(
-                Arrays.asList("localhost:9200"), "registry", "registry-refs", 5, null, null, false);
+        ElasticSearchRegistryConnection con = new ElasticSearchRegistryConnectionImpl();
         
         List<String> ids = LidVidUtils.getLatestLids(con, Arrays.asList("urn:nasa:pds:orex.spice"));
         System.out.println(ids);

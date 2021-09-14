@@ -13,6 +13,7 @@ import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 
 import gov.nasa.pds.api.engineering.elasticsearch.ElasticSearchRegistryConnection;
 import gov.nasa.pds.model.Products;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
 /**
@@ -38,8 +39,8 @@ public class BundleDAO
     public Products getBundleCollections(String lidvid, int start, int limit, List<String> fields, 
             List<String> sort, boolean onlySummary) throws IOException, LidVidNotFoundException
     {
-        Products products = new Products();
-        return products;
+        // TODO: Move code from the bundle controller here.
+        throw new NotImplementedException();
     }
 
 

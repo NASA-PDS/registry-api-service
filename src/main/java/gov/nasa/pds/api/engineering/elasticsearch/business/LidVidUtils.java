@@ -2,6 +2,7 @@ package gov.nasa.pds.api.engineering.elasticsearch.business;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +39,7 @@ public class LidVidUtils
      * @return list of LIDVIDs
      * @throws IOException
      */
-    public static List<String> getLatestLids(ElasticSearchRegistryConnection esConnection, List<String> lids) throws IOException
+    public static List<String> getLatestLids(ElasticSearchRegistryConnection esConnection, Collection<String> lids) throws IOException
     {
         // Create request
         SearchSourceBuilder src = buildGetLatestLidVidsRequest(lids);
@@ -82,7 +83,7 @@ public class LidVidUtils
      * @param lids list of LIDs
      * @return list of LIDVIDs (latest versions)
      */
-    public static SearchSourceBuilder buildGetLatestLidVidsRequest(List<String> lids)
+    public static SearchSourceBuilder buildGetLatestLidVidsRequest(Collection<String> lids)
     {
         if(lids == null || lids.isEmpty()) return null;
         
