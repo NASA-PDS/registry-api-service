@@ -68,6 +68,10 @@ public void configureContentNegotiation(ContentNegotiationConfigurer configurer)
   public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
    
       WebMVCConfig.log.info("Number of converters available " + Integer.toString(converters.size()));
+      converters.add(new CvsPluralSerializer);
+      converters.add(new CvsSingularSerializer);
+      converters.add(new JsonPluralSerializer);
+      converters.add(new JsonSingularSerializer);
       converters.add(new JsonProductSerializer());
       converters.add(new Pds4JsonProductSerializer());
       converters.add(new Pds4JsonProductsSerializer());
