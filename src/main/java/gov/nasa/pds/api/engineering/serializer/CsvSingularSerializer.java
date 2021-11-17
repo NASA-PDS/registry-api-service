@@ -16,11 +16,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gov.nasa.pds.model.WyriwygProduct;
 
-public class CvsSingularSerializer extends AbstractHttpMessageConverter<WyriwygProduct>
+public class CsvSingularSerializer extends AbstractHttpMessageConverter<WyriwygProduct>
 {
-	public CvsSingularSerializer()
+	public CsvSingularSerializer()
 	{
-        super(new MediaType("application","cvs"), new MediaType("text","cvs"));
+        super(new MediaType("application","csv"), new MediaType("text","csv"));
 	}
 
 	@Override

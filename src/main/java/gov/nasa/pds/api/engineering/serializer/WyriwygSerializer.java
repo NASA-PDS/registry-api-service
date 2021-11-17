@@ -45,11 +45,12 @@ final class WyriwygSerializer
 		HashMap<String,String> row = new HashMap<String,String>();
 		int n=0;
 
-		for (WyriwygProductKeyValuePairs kvp : product.getKeyValuePairs()) row.put(kvp.getKey(), kvp.getKey());
+		for (WyriwygProductKeyValuePairs kvp : product.getKeyValuePairs()) row.put(kvp.getKey(), kvp.getValue());
 		for (String label : labels)
 		{
 			if (0 < n) wr.write(",");
-			if (row.containsKey(label)) wr.write(om.writeValueAsString(row.get(label)));
+			if (row.containsKey(label)) wr.write(row.get(label));
+			n++;
 		}
 		wr.write("\n");
 	}
