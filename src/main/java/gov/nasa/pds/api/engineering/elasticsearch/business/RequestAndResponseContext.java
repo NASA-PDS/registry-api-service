@@ -108,10 +108,10 @@ public class RequestAndResponseContext
     {
     	Map<String, ProductBusinessLogic> formatters = new HashMap<String, ProductBusinessLogic>();
     	formatters.put("application/csv", new WyriwygBusinessObject());
-    	formatters.put("application/csv+text", new WyriwygBusinessObject());
     	formatters.put("application/json", new PdsProductBusinessObject());
     	formatters.put("application/kvp+json", new WyriwygBusinessObject());
     	formatters.put("application/pds4+json", new Pds4ProductBusinessObject());
+    	formatters.put("text/csv", new WyriwygBusinessObject());
     	this.formatters = formatters;
     	this.format = output_format;
 
