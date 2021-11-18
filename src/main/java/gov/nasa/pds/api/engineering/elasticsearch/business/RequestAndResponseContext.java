@@ -111,6 +111,7 @@ public class RequestAndResponseContext
     	formatters.put("application/json", new PdsProductBusinessObject());
     	formatters.put("application/kvp+json", new WyriwygBusinessObject());
     	formatters.put("application/pds4+json", new Pds4ProductBusinessObject());
+    	formatters.put("application/pds4+xml", new Pds4ProductBusinessObject());
     	formatters.put("text/csv", new WyriwygBusinessObject());
     	this.formatters = formatters;
     	this.format = output_format;
