@@ -107,6 +107,7 @@ public class RequestAndResponseContext
     		) throws ApplicationTypeException
     {
     	Map<String, ProductBusinessLogic> formatters = new HashMap<String, ProductBusinessLogic>();
+    	formatters.put("*/*", new PdsProductBusinessObject());
     	formatters.put("application/csv", new WyriwygBusinessObject());
     	formatters.put("application/json", new PdsProductBusinessObject());
     	formatters.put("application/kvp+json", new WyriwygBusinessObject());
