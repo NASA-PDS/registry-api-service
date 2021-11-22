@@ -116,7 +116,6 @@ public class RequestAndResponseContext
     	formatters.put("text/csv", new WyriwygBusinessObject());
     	this.formatters = formatters;
     	this.format = output_format;
-
     	this.baseURL = base;
     	this.om = om;
     	this.queryString = q;
