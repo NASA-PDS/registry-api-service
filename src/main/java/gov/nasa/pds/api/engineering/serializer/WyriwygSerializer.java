@@ -49,7 +49,7 @@ final class WyriwygSerializer
 		for (String label : labels)
 		{
 			if (0 < n) wr.write(",");
-			if (row.containsKey(label)) wr.write(row.get(label));
+			if (row.containsKey(label)) wr.write("\"" + row.get(label) + "\"");
 			n++;
 		}
 		wr.write("\n");
