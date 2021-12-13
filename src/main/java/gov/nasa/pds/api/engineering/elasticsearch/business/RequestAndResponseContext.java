@@ -163,7 +163,7 @@ public class RequestAndResponseContext
 			throw new ApplicationTypeException("The given application type, " + String.valueOf(this.format) + ", is not known by RquestAndResponseContext.");
 		}
 
-		/* if the URL contains fields, then make sure the minumum was included too */
+		/* if the URL contains fields, then make sure the minimum was included too OR there is maximum set. */
 		if ((given != null && 0 < given.size()) || 0 < max_needs.length)
 		{
 			if (given != null) complete.addAll(given);
