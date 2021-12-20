@@ -116,6 +116,7 @@ public class RequestAndResponseContext
     	formatters.put("application/pds4+xml", new Pds4ProductBusinessObject());
     	formatters.put("application/xml", new PdsProductBusinessObject());
     	formatters.put("text/csv", new WyriwygBusinessObject());
+    	formatters.put("text/html", new PdsProductBusinessObject());
     	this.formatters = formatters;
     	this.format = this.find_match(output_format);
     	this.baseURL = base;
