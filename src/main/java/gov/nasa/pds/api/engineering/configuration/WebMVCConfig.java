@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -21,6 +22,8 @@ import gov.nasa.pds.api.engineering.serializer.JsonSingularSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4JsonProductSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4JsonProductsSerializer;
 import gov.nasa.pds.api.engineering.serializer.Pds4XmlProductSerializer;
+import gov.nasa.pds.api.engineering.serializer.PdsProductTextHtmlSerializer;
+import gov.nasa.pds.api.engineering.serializer.PdsProductsTextHtmlSerializer;
 import gov.nasa.pds.api.engineering.serializer.XmlProductSerializer;
 
 
@@ -50,21 +53,11 @@ public class WebMVCConfig implements WebMvcConfigurer
 	}
 
 	/**
-	 * Setup a simple strategy: use all the defaults and return XML by default when not sure. 
+	 * Setup a simple strategy: use all the defaults and return JSON by default when not sure. 
 	 */
 	public void configureContentNegotiation(ContentNegotiationConfigurer configurer)
 	{
-		log.error ("***********           ignoring accept header");
-		configurer.ignoreAcceptHeader(true);
-		configurer.favorParameter(true);
-		/*
-    	// For path content negociation , .json. .xml ...
-    	// that does not work on its own, I guess I also need to update the swagger definition
-    	configurer.favorParameter(false).
-    	defaultContentType(MediaType.APPLICATION_JSON).
-    	mediaType("xml", MediaType.APPLICATION_XML).
-    	mediaType("json", MediaType.APPLICATION_JSON);
-		 */
+		configurer.defaultContentType(MediaType.APPLICATION_JSON);
 	}
 
 	@Override
@@ -79,6 +72,8 @@ public class WebMVCConfig implements WebMvcConfigurer
 		converters.add(new Pds4JsonProductSerializer());
 		converters.add(new Pds4JsonProductsSerializer());
 		converters.add(new Pds4XmlProductSerializer());
+		converters.add(new PdsProductTextHtmlSerializer());
+		converters.add(new PdsProductsTextHtmlSerializer());
 		converters.add(new XmlProductSerializer()); // Product class, application/xml
 		//converters.add(new Jaxb2RootElementHttpMessageConverter()); // other classes, application/xml
 	}

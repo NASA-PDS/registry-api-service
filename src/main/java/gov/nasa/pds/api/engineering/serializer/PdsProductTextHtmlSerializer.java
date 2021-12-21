@@ -10,7 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.AbstractHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +20,7 @@ public class PdsProductTextHtmlSerializer extends AbstractHttpMessageConverter<P
 {
 	public PdsProductTextHtmlSerializer()
 	{
-        super(new MediaType("text","html"));
+        super(MediaType.TEXT_HTML);
 	}
 
 	@Override
@@ -35,15 +34,13 @@ public class PdsProductTextHtmlSerializer extends AbstractHttpMessageConverter<P
 	protected void writeInternal(PdsProduct t, HttpOutputMessage outputMessage)
 			throws IOException, HttpMessageNotWritableException
 	{
-		MappingJackson2HttpMessageConverter asJson = new MappingJackson2HttpMessageConverter();
         ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(Include.NON_NULL);
-	    asJson.setObjectMapper(mapper);
-	    asJson.setPrettyPrint(true);
-
         OutputStream os = outputMessage.getBody();
         OutputStreamWriter wr = new OutputStreamWriter(os);
-        asJson.write(t, MediaType.TEXT_HTML, outputMessage);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+        wr.write("<html><body><h1>JSON as text</h1><p><pre>");
+        wr.write(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(t));
+        wr.write("</pre></p></body></html>");
         wr.close();
 	}
 }
