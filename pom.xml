@@ -38,7 +38,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	<name>gov.nasa.pds.api.registry-service</name>
 	<description>registry api service contributing to the PDS federated API</description>
 	<properties>
-		<jackson-version>2.10.0</jackson-version>
+		<jackson-version>2.12.6.1</jackson-version>
 		<springfox-version>2.7.0</springfox-version>
 		<elasticsearch.version>7.13.3</elasticsearch.version>
 	</properties>
